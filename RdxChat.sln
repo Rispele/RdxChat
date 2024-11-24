@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RdxChat", "RdxChat\RdxChat.csproj", "{E5E8E07A-1791-4752-B496-3B37D188F58B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rdx", "Rdx\Rdx.csproj", "{A892680E-8F71-4519-BA6C-3FB0EC133A21}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{663C7323-34E8-4B33-9FC7-DD01381F7E8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,13 @@ Global
 		{E5E8E07A-1791-4752-B496-3B37D188F58B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E5E8E07A-1791-4752-B496-3B37D188F58B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E5E8E07A-1791-4752-B496-3B37D188F58B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A892680E-8F71-4519-BA6C-3FB0EC133A21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A892680E-8F71-4519-BA6C-3FB0EC133A21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A892680E-8F71-4519-BA6C-3FB0EC133A21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A892680E-8F71-4519-BA6C-3FB0EC133A21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{663C7323-34E8-4B33-9FC7-DD01381F7E8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{663C7323-34E8-4B33-9FC7-DD01381F7E8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{663C7323-34E8-4B33-9FC7-DD01381F7E8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{663C7323-34E8-4B33-9FC7-DD01381F7E8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
