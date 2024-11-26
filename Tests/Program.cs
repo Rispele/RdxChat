@@ -22,23 +22,23 @@ static class Program
 
         var id = Random.Shared.NextInt64();
         
-        var t1 = factory.CreateTuple(
-            factory.CreateValue(1, id, 1),
-            factory.CreateValue(2, id, 1),
+        var t1 = factory.Tuple(
+            factory.Value(1, id, 1),
+            factory.Value(2, id, 1),
             Random.Shared.NextInt64(),
             version: 1);
         
-        var t2 = factory.CreateTriple(
-            factory.CreateValue(1, id, 1),
-            factory.CreateValue(1, id, 1),
-            factory.CreateValue(3, id, 1),
+        var t2 = factory.Triple(
+            factory.Value(1, id, 1),
+            factory.Value(1, id, 1),
+            factory.Value(3, id, 1),
             Random.Shared.NextInt64(),
             version: 2);
         
-        var t3 = factory.CreateTriple(
-            factory.CreateValue(1, id, 1),
-            factory.CreateValue(4, id, 1),
-            factory.CreateValue(3, id, 1),
+        var t3 = factory.Triple(
+            factory.Value(1, id, 1),
+            factory.Value(4, id, 1),
+            factory.Value(3, id, 1),
             Random.Shared.NextInt64(),
             version: 3);
         
