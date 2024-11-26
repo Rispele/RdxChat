@@ -1,4 +1,4 @@
-namespace Rdx.Objects;
+namespace Rdx.Objects.ValueObjects;
 
 public static class RdxValueSettings
 {

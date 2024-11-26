@@ -1,4 +1,4 @@
-namespace Rdx;
+namespace Rdx.Extensions;
 
 public static class EnumerableExtensions
 {

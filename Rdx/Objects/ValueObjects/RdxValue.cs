@@ -1,4 +1,6 @@
-namespace Rdx.Objects;
+using Rdx.Extensions;
+
+namespace Rdx.Objects.ValueObjects;
 
 /// <inheritdoc />
 /// Possible values: string, int, long, double, bool
