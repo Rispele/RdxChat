@@ -2,27 +2,36 @@ namespace Rdx.Objects;
 
 public abstract class RdxObject
 {
-    public Guid ReplicaId { get; private set; }
+    private readonly long currentReplicaId;
+    private bool updated;
+    
+    public long ReplicaId { get; private set; }
     public long Version { get; private set; }
 
-    protected RdxObject(Guid replicaId, long version)
+    protected RdxObject(long replicaId, long version, long currentReplicaId)
     {
         ReplicaId = replicaId;
         Version = version;
+
+        this.currentReplicaId = currentReplicaId;
     }
 
-    protected void UpdateObject(Guid? replicaId = null)
+    protected void UpdateObject()
     {
-        if (replicaId is not null)
+        if (updated)
         {
-            ReplicaId = replicaId.Value;
+            return;
         }
-
+        
+        ReplicaId = currentReplicaId;
         Version++;
+        updated = true;
     }
 
-    public override string ToString()
+    public abstract string Serialize();
+
+    protected string SerializeStamp()
     {
-        return $"@{ReplicaId}-{Version}";
+        return $"@{ReplicaId:X}-{Version}";
     }
 }

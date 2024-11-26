@@ -1,46 +1,35 @@
 namespace Rdx.Objects;
 
 /// <inheritdoc />
-/// Possible values: string, int, double
+/// Possible values: string, int, double, bool
 public sealed class RdxValue<TValue> : RdxObject
 {
-    public TValue Value { get; private set; }
+    private TValue value;
 
-    public RdxValue(TValue value, Guid replicaId, long version = 0) 
-        : base(replicaId, version)
+    public TValue Value
     {
-        EnsureValueIsNotNull(value);
-        EnsureValueTypeIsAllowed(value);
+        get => value;
+        set
+        {
+            value.EnsureNotNull();
+            value!.GetType().EnsureTypeAllowedAsRdxValueType();
+
+            this.value = value;
+            UpdateObject();
+        }
+    }
+
+    public RdxValue(TValue value, long replicaId, long version, long currentReplicaId)
+        : base(replicaId, version, currentReplicaId)
+    {
+        value.EnsureNotNull();
+        value!.GetType().EnsureTypeAllowedAsRdxValueType();
 
         Value = value;
     }
 
-    public void Update(TValue value, Guid? replicaId = null)
+    public override string Serialize()
     {
-        EnsureValueIsNotNull(value);
-        
-        Value = value;
-        UpdateObject(replicaId);
-    }
-
-    private void EnsureValueTypeIsAllowed(TValue value)
-    {
-        if (!RdxValueConstants.RdxValueAllowedTypes.Contains(value?.GetType()))
-        {
-            throw new InvalidOperationException($"Could not create RdxValue with type: {value?.GetType()}");
-        }
-    }
-
-    private void EnsureValueIsNotNull(TValue value)
-    {
-        if (value is null)
-        {
-            throw new ArgumentNullException(nameof(value));
-        }
-    }
-
-    public override string ToString()
-    {
-        return $"{Value}{base.ToString()}";
+        return $"{Value}{SerializeStamp()}";
     }
 }
