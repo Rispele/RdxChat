@@ -1,7 +1,7 @@
 namespace Rdx.Objects;
 
 /// <inheritdoc />
-/// Possible values: string, int, double, bool
+/// Possible values: string, int, long, double, bool
 public sealed class RdxValue<TValue> : RdxObject
 {
     private TValue value;

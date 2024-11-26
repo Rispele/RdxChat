@@ -2,7 +2,7 @@ namespace Rdx.Objects;
 
 public static class RdxValueSettings
 {
-    public static readonly Type[] RdxValueAllowedTypes = [typeof(string), typeof(int), typeof(double), typeof(bool)];
+    public static readonly Type[] RdxValueAllowedTypes = [typeof(string), typeof(int), typeof(long), typeof(double), typeof(bool)];
 
     public static void EnsureTypeAllowedAsRdxValueType(this Type type)
     {
