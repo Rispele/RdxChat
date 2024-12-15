@@ -1,25 +1,23 @@
 ﻿using System.Text;
-using Rdx.Extensions;
-using Rdx.Objects;
 using Rdx.Objects.PlexValues;
 
-namespace Rdx.Serialization.Attributes.XPleSerializers;
+namespace Rdx.Serialization.Attributes;
 
 public class RdxXPleSerializerAttribute : RdxSerializerAttribute
 {
-    public override string Serialize(RdxObject obj)
+    public override string Serialize(RdxSerializer serializer, object obj)
     {
         if (obj is not RdxPLEX xPle)
         {
-            throw new ArgumentException($"Value must be a type of RdxXPle");
+            throw new ArgumentException("Value must be a type of RdxXPle");
         }
 
         var sb = new StringBuilder();
 
-        sb.Append('<').Append(RdxSerializationHelper.SerializeStamp(obj)).Append(' ');
+        sb.Append('<').Append(RdxSerializationHelper.SerializeStamp(xPle)).Append(' ');
         foreach (var value in xPle)
         {
-            sb.Append(value.GetRdxSerializerAttribute(KnownSerializers.Values).Serialize(value)).Append(':');
+            sb.Append(serializer.Serialize(value)).Append(':');
         }
 
         if (xPle.Count != 0)

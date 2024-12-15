@@ -1,18 +1,18 @@
 using Rdx.Extensions;
-using Rdx.Serialization.Attributes.XPleSerializers;
+using Rdx.Serialization.Attributes;
 
 namespace Rdx.Objects.PlexValues;
 
 [RdxXPleSerializer]
-public class RdxTuple<T1, T2> : RdxPLEX
-    where T1 : RdxObject
-    where T2 : RdxObject
+public class RdxTuple<T1, T2> : RdxPLEX 
+    where T1 : notnull
+    where T2 : notnull
 {
     public override int Count => 2;
 
     public T1 First
     {
-        get => (Items[0] as T1)!;
+        get => (T1)Items[0];
         set
         {
             value.EnsureNotNull();
@@ -24,7 +24,7 @@ public class RdxTuple<T1, T2> : RdxPLEX
 
     public T2 Second
     {
-        get => (Items[1] as T2)!;
+        get => (T2)Items[1];
         set
         {
             value.EnsureNotNull();

@@ -7,15 +7,17 @@ namespace Rdx.Primitives;
 public class RdxBuffer : IDisposable
 {
     private readonly int length;
+    private readonly RdxSerializer serializer;
     public readonly IntPtr buffer;
 
     public RdxBufferSlice FreeBufferSlice { get; private set; }
 
     public int WrittenLength => (int)(FreeBufferSlice.From - buffer);
 
-    public RdxBuffer(int length)
+    public RdxBuffer(int length, RdxSerializer serializer)
     {
         this.length = length;
+        this.serializer = serializer;
         buffer = Marshal.AllocHGlobal(length);
         FreeBufferSlice = new RdxBufferSlice(buffer, buffer + length);
     }
@@ -35,7 +37,7 @@ public class RdxBuffer : IDisposable
 
     public RdxBufferSlice AppendObject(RdxObject rdxObject)
     {
-        var serialized = RdxSerializer.Serialize(rdxObject);
+        var serialized = serializer.Serialize(rdxObject);
         var serializedBegin = Marshal.StringToHGlobalAnsi(serialized);
         var serializedEnd = serializedBegin + serialized.Length;
 

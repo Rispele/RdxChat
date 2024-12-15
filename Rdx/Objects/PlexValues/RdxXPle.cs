@@ -1,6 +1,6 @@
 using System.Collections;
 using Rdx.Extensions;
-using Rdx.Serialization.Attributes.XPleSerializers;
+using Rdx.Serialization.Attributes;
 
 namespace Rdx.Objects.PlexValues;
 
@@ -10,7 +10,7 @@ public class RdxXPle : RdxPLEX
     public override int Count => Items.Count;
     
     public RdxXPle(
-        List<RdxObject> items,
+        List<object> items,
         long replicaId,
         long version,
         long currentReplicaId)
@@ -18,14 +18,14 @@ public class RdxXPle : RdxPLEX
     {
     }
 
-    public void Add(RdxObject rdxObject)
+    public void Add(object rdxObject)
     {
         Items.Add(rdxObject);
         UpdateObject();
     }
     
     [Obsolete("Not supported by rdx merge")]
-    public RdxObject RemoveAt(int index)
+    public object RemoveAt(int index)
     {
         var value = Items[index];
         
@@ -35,7 +35,7 @@ public class RdxXPle : RdxPLEX
         return value;
     }
 
-    public RdxObject this[int index]
+    public object this[int index]
     {
         get => Items[index];
         set

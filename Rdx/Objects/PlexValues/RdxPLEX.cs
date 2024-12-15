@@ -2,14 +2,14 @@ using System.Collections;
 
 namespace Rdx.Objects.PlexValues;
 
-public abstract class RdxPLEX : RdxObject, IEnumerable<RdxObject>
+public abstract class RdxPLEX : RdxObject, IEnumerable<object>
 {
-    protected readonly List<RdxObject> Items;
+    protected readonly List<object> Items;
 
     public abstract int Count { get; } 
     
     protected RdxPLEX(
-        List<RdxObject> items,
+        List<object> items,
         long replicaId, 
         long version,
         long currentReplicaId) 
@@ -18,7 +18,7 @@ public abstract class RdxPLEX : RdxObject, IEnumerable<RdxObject>
         Items = items;
     }
 
-    public IEnumerator<RdxObject> GetEnumerator()
+    public IEnumerator<object> GetEnumerator()
     {
         return Items.GetEnumerator();
     }
