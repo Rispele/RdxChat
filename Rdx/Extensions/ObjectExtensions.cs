@@ -17,10 +17,9 @@ public static class ObjectExtensions
     }
 
     public static RdxSerializerAttribute? FindRdxSerializerAttribute(
-        this object obj,
+        this Type type,
         ConcurrentDictionary<Type, RdxSerializerAttribute>? knownSerializers = null)
     {
-        var type = obj.GetType();
         if (knownSerializers?.TryGetValue(type, out var result) ?? false)
         {
             return result;

@@ -39,21 +39,4 @@ public class RdxObjectFactory
         var replicaId = replicaIdProvider.GetReplicaId();
         return new RdxTuple<T1, T2>(first, second, replicaId, InitialVersion, replicaId);
     }
-
-    // public RdxTriple<T1, T2, T3> Triple<T1, T2, T3>(T1 first, T2 second, T3 third, long replicaId, long version)
-    //     where T1 : notnull
-    //     where T2 : notnull
-    //     where T3 : notnull
-    // {
-    //     return new RdxTriple<T1, T2, T3>(first, second, third, replicaId, version, replicaIdProvider.GetReplicaId());
-    // }
-    //
-    // public RdxTriple<T1, T2, T3> NewTriple<T1, T2, T3>(T1 first, T2 second, T3 third)
-    //     where T1 : notnull
-    //     where T2 : notnull
-    //     where T3 : notnull
-    // {
-    //     var replicaId = replicaIdProvider.GetReplicaId();
-    //     return new RdxTriple<T1, T2, T3>(first, second, third, replicaId, InitialVersion, replicaId);
-    // }
 }

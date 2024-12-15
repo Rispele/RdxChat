@@ -4,6 +4,8 @@ using Rdx.Objects;
 using Rdx.Objects.ValueObjects;
 using Rdx.Serialization;
 using Rdx.Serialization.Attributes.Markup;
+using Rdx.Serialization.Parser;
+using Rdx.Serialization.Tokenizer;
 
 namespace Tests.Serializer;
 
@@ -14,12 +16,26 @@ public class RdxSerializer_CustomObject_Tests
     private readonly RdxSerializer serializer = new();
 
     [Test]
+    public void Deserialize()
+    {
+        var s =
+            "{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@0-0>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":0>}>}";
+        var t = RdxTokenizer.Tokenize(s);
+        var reader = new TokensReader(t, s);
+        var parsed = RdxParser.Parse(reader);
+        foreach (var token in t)     
+        {
+            Console.WriteLine(s[token.Start..(token.Start + token.Length)]);            
+        }
+    }
+    
+    [Test]
     public void Serialize_CustomObject_ShouldReturnCorrectString()
     {
         var obj = new TestObjectOuter();
         serializer.Serialize(obj).Should()
             .Be(
-                "<<Inner:<<bool:True>:<IntegerValue:123>:<RdxString:\"string\"@0-0>>>:<abc:\"abc\">:<RdxObj:<@0-0 <Value:\"value\">>>>");
+                "{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@0-0>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":0>}>}");
     } 
     
     private class TestObjectOuter
@@ -35,7 +51,7 @@ public class RdxSerializer_CustomObject_Tests
     private class TestRdxObject : RdxObject
     {
         [RdxProperty]
-        public string Value { get; } = "value";
+        public int Value { get; } = 0;
         
         public TestRdxObject(long replicaId, long version, long currentReplicaId) : base(replicaId, version, currentReplicaId)
         {
