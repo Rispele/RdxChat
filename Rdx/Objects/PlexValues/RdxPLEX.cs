@@ -1,8 +1,12 @@
+using System.Collections;
+
 namespace Rdx.Objects.PlexValues;
 
-public abstract class RdxPLEX : RdxObject
+public abstract class RdxPLEX : RdxObject, IEnumerable<RdxObject>
 {
     protected readonly List<RdxObject> Items;
+
+    public abstract int Count { get; } 
     
     protected RdxPLEX(
         List<RdxObject> items,
@@ -12,5 +16,15 @@ public abstract class RdxPLEX : RdxObject
         : base(replicaId, version, currentReplicaId)
     {
         Items = items;
+    }
+
+    public IEnumerator<RdxObject> GetEnumerator()
+    {
+        return Items.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

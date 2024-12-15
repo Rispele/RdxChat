@@ -1,10 +1,13 @@
 using Rdx.Extensions;
+using Rdx.Serialization.Attributes;
 
 namespace Rdx.Objects.ValueObjects;
 
 /// <inheritdoc />
 /// Possible values: string, int, long, double, bool
+[RdxValueSerializer]
 public sealed class RdxValue<TValue> : RdxObject
+    where TValue: notnull
 {
     private TValue value;
 
@@ -14,7 +17,7 @@ public sealed class RdxValue<TValue> : RdxObject
         set
         {
             value.EnsureNotNull();
-            value!.GetType().EnsureTypeAllowedAsRdxValueType();
+            value.GetType().EnsureTypeAllowedAsRdxValueType();
 
             this.value = value;
             UpdateObject();
@@ -25,13 +28,8 @@ public sealed class RdxValue<TValue> : RdxObject
         : base(replicaId, version, currentReplicaId)
     {
         value.EnsureNotNull();
-        value!.GetType().EnsureTypeAllowedAsRdxValueType();
+        value.GetType().EnsureTypeAllowedAsRdxValueType();
 
-        Value = value;
-    }
-
-    public override string Serialize()
-    {
-        return $"{Value}{SerializeStamp()}";
+        this.value = value;
     }
 }

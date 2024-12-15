@@ -1,68 +1,57 @@
 using Rdx.Extensions;
+using Rdx.Serialization.Attributes.XPleSerializers;
 
 namespace Rdx.Objects.PlexValues;
 
-public class RdxTriple<T1, T2, T3> : RdxObject
+[RdxXPleSerializer]
+public class RdxTriple<T1, T2, T3> : RdxPLEX
     where T1 : RdxObject
     where T2 : RdxObject
     where T3 : RdxObject
 {
-    private T1 first;
-
+    public override int Count => 3;
+    
     public T1 First
     {
-        get => first;
+        get => (Items[0] as T1)!;
         set
         {
             value.EnsureNotNull();
-            first = value;
-        
+            Items[0] = value;
+
             UpdateObject();
         }
     }
-
-    private T2 second;
 
     public T2 Second
     {
-        get => second;
+        get => (Items[1] as T2)!;
         set
         {
             value.EnsureNotNull();
-            second = value;
-            
+            Items[1] = value;
+
             UpdateObject();
         }
     }
-    
-    private T3 third;
 
     public T3 Third
     {
-        get => third;
+        get => (Items[2] as T3)!;
         set
         {
             value.EnsureNotNull();
-            third = value;
-            
+            Items[2] = value;
+
             UpdateObject();
         }
     }
 
     public RdxTriple(T1 first, T2 second, T3 third, long replicaId, long version, long currentReplicaId)
-        : base(replicaId, version, currentReplicaId)
+        : base([first, second, third], replicaId, version, currentReplicaId)
     {
         first.EnsureNotNull();
         second.EnsureNotNull();
         third.EnsureNotNull();
-        
-        this.first = first;
-        this.second = second;
-        this.third = third;
-    }
-
-    public override string Serialize()
-    {
-        return $"<{SerializeStamp()} {first.Serialize()}:{second.Serialize()}:{third.Serialize()}>";
     }
 }

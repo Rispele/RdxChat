@@ -22,16 +22,9 @@ public abstract class RdxObject
         {
             return;
         }
-        
+
         ReplicaId = currentReplicaId;
         Version++;
         updated = true;
-    }
-
-    public abstract string Serialize();
-
-    protected string SerializeStamp()
-    {
-        return $"@{ReplicaId:X}-{Version}";
     }
 }

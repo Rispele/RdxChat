@@ -19,6 +19,7 @@ public class RdxObjectFactory
     }
 
     public RdxValue<T> NewValue<T>(T value)
+        where T: notnull
     {
         var replicaId = replicaIdProvider.GetReplicaId();
         return new RdxValue<T>(value, replicaId, InitialVersion, replicaId);

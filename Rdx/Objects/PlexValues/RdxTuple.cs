@@ -1,51 +1,43 @@
 using Rdx.Extensions;
+using Rdx.Serialization.Attributes.XPleSerializers;
 
 namespace Rdx.Objects.PlexValues;
 
-public class RdxTuple<T1, T2> : RdxObject
+[RdxXPleSerializer]
+public class RdxTuple<T1, T2> : RdxPLEX
     where T1 : RdxObject
     where T2 : RdxObject
 {
-    private T1 first;
+    public override int Count => 2;
 
     public T1 First
     {
-        get => first;
+        get => (Items[0] as T1)!;
         set
         {
             value.EnsureNotNull();
-            first = value;
-        
+            Items[0] = value;
+
             UpdateObject();
         }
     }
 
-    private T2 second;
-
     public T2 Second
     {
-        get => second;
+        get => (Items[1] as T2)!;
         set
         {
             value.EnsureNotNull();
-            second = value;
-            
+            Items[1] = value;
+
             UpdateObject();
         }
     }
 
     public RdxTuple(T1 first, T2 second, long replicaId, long version, long currentReplicaId)
-        : base(replicaId, version, currentReplicaId)
+        : base([first, second], replicaId, version, currentReplicaId)
     {
         first.EnsureNotNull();
         second.EnsureNotNull();
-        
-        this.first = first;
-        this.second = second;
-    }
-
-    public override string Serialize()
-    {
-        return $"<{SerializeStamp()} {first.Serialize()}:{second.Serialize()}>";
     }
 }

@@ -1,8 +1,15 @@
+using System.Collections;
+using Rdx.Extensions;
+using Rdx.Serialization.Attributes.XPleSerializers;
+
 namespace Rdx.Objects.PlexValues;
 
-public class RdxXple : RdxPLEX
+[RdxXPleSerializer]
+public class RdxXPle : RdxPLEX
 {
-    public RdxXple(
+    public override int Count => Items.Count;
+    
+    public RdxXPle(
         List<RdxObject> items,
         long replicaId,
         long version,
@@ -14,13 +21,16 @@ public class RdxXple : RdxPLEX
     public void Add(RdxObject rdxObject)
     {
         Items.Add(rdxObject);
+        UpdateObject();
     }
-
+    
+    [Obsolete("Not supported by rdx merge")]
     public RdxObject RemoveAt(int index)
     {
         var value = Items[index];
         
         Items.RemoveAt(index);
+        UpdateObject();
 
         return value;
     }
@@ -28,11 +38,12 @@ public class RdxXple : RdxPLEX
     public RdxObject this[int index]
     {
         get => Items[index];
-        set => Items[index] = value;
-    } 
-    
-    public override string Serialize()
-    {
-        return $"<{SerializeStamp()} {string.Join(":", Items.Select(item => item.Serialize()))}>";
+        set
+        {
+            value.EnsureNotNull();
+            Items[index] = value;
+           
+            UpdateObject();
+        }
     }
 }

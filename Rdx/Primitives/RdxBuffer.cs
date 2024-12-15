@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Rdx.Objects;
+using Rdx.Serialization;
 
 namespace Rdx.Primitives;
 
@@ -34,7 +35,7 @@ public class RdxBuffer : IDisposable
 
     public RdxBufferSlice AppendObject(RdxObject rdxObject)
     {
-        var serialized = rdxObject.Serialize();
+        var serialized = RdxSerializer.Serialize(rdxObject);
         var serializedBegin = Marshal.StringToHGlobalAnsi(serialized);
         var serializedEnd = serializedBegin + serialized.Length;
 
