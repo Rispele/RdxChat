@@ -7,6 +7,7 @@ using Rdx.Objects;
 using Rdx.Serialization.Attributes;
 using Rdx.Serialization.Parser;
 using Rdx.Serialization.RdxToObjectConverter;
+using Rdx.Serialization.RdxToObjectConverter.ValueParsers;
 using Rdx.Serialization.Tokenizer;
 
 namespace Rdx.Serialization;
@@ -15,19 +16,30 @@ public partial class RdxSerializer
 {
     private readonly IReplicaIdProvider replicaIdProvider;
     private readonly SimpleConverter simpleConverter;
-    
+
     [GeneratedRegex("\\s{2,}")]
     private static partial Regex ClearJRdxRegex();
-    
+
     private readonly ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers = new();
     private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes = new();
 
-    public RdxSerializer(IReplicaIdProvider replicaIdProvider)
+    public RdxSerializer(IReplicaIdProvider replicaIdProvider, params ValueParserBase[] customParsers)
     {
         this.replicaIdProvider = replicaIdProvider;
-        simpleConverter = new SimpleConverter(replicaIdProvider);
+
+        ValueParserBase[] parsers =
+        [
+            new BoolValueParser(),
+            new DateTimeValueParser(),
+            new DoubleValueParser(),
+            new IntValueParser(),
+            new LongValueParser(),
+            new StringValueParser(),
+        ];
+
+        simpleConverter = new SimpleConverter(replicaIdProvider, parsers.Concat(customParsers).ToArray());
     }
-    
+
     #region serialization
 
     public string Serialize(object obj)
@@ -110,15 +122,15 @@ public partial class RdxSerializer
 
     public TType Deserialize<TType>(string jRdx)
     {
-        return (TType) Deserialize(typeof(TType), jRdx);
+        return (TType)Deserialize(typeof(TType), jRdx);
     }
-    
+
     public object Deserialize(Type type, string jRdx)
     {
         var cleared = ClearJRdxRegex().Replace(jRdx.Trim(), " ");
         var tokenSource = new RdxTokenizer(cleared).Tokenize();
         var parser = new RdxParser(new TokensReader(tokenSource, cleared));
-        
+
         var converted = simpleConverter.ConvertToType(type, parser.Parse());
         return converted;
     }

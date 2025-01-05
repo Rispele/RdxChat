@@ -1,14 +1,15 @@
 using System.Collections;
+using JetBrains.Annotations;
 using Rdx.Extensions;
 using Rdx.Serialization.Attributes;
 
 namespace Rdx.Objects.PlexValues;
 
 [RdxXPleSerializer]
-public class RdxXPle : RdxPLEX
+public class RdxXPle<T> : RdxPLEX
 {
     public override int Count => Items.Count;
-    
+
     public RdxXPle(
         List<object> items,
         long replicaId,
@@ -18,9 +19,9 @@ public class RdxXPle : RdxPLEX
     {
     }
 
-    public void Add(object rdxObject)
+    public void Add(T rdxObject)
     {
-        Items.Add(rdxObject);
+        Items.Add(rdxObject!);
         UpdateObject();
     }
     
@@ -35,9 +36,9 @@ public class RdxXPle : RdxPLEX
         return value;
     }
 
-    public object this[int index]
+    public T this[int index]
     {
-        get => Items[index];
+        get => (T) Items[index]!;
         set
         {
             value.EnsureNotNull();
