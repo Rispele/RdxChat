@@ -84,6 +84,9 @@ public partial class RdxSerializer
             case bool boolObj:
                 result = boolObj.ToString(CultureInfo.InvariantCulture);
                 return true;
+            case DateTime dateTimeObj:
+                result = dateTimeObj.ToString(CultureInfo.InvariantCulture);
+                return true;
         }
 
         result = null;

@@ -17,6 +17,8 @@ public class RdxValueSerializerAttribute : RdxSerializerAttribute
                 $"{boolValue.Value.ToString(CultureInfo.InvariantCulture)}{RdxSerializationHelper.SerializeStamp(boolValue)}",
             RdxValue<string> stringValue =>
                 $"\"{stringValue.Value}\"{RdxSerializationHelper.SerializeStamp(stringValue)}",
+            RdxValue<DateTime> dateTimeValue =>
+                $"\"{dateTimeValue.Value.ToString(CultureInfo.InvariantCulture)}\"{RdxSerializationHelper.SerializeStamp(dateTimeValue)}",
             _ => throw new ArgumentException($"Type: {obj.GetType()} is not allowed")
         };
     }
