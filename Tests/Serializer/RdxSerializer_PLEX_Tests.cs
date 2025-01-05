@@ -9,7 +9,7 @@ namespace Tests.Serializer;
 [Parallelizable]
 public class RdxSerializer_PLEX_Tests
 {
-    private readonly RdxSerializer serializer = new();
+    private readonly RdxSerializer serializer = new(new ConstIdProvider(123));
 
     [TestCaseSource(nameof(RdxValueTestCaseSource))]
     public string Serialize_RdxValues_Should_ReturnCorrectValue(object value)

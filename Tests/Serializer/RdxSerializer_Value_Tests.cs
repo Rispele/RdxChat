@@ -9,7 +9,7 @@ namespace Tests.Serializer;
 [Parallelizable]
 public class RdxSerializer_Value_Tests
 {
-    private readonly RdxSerializer serializer = new();
+    private readonly RdxSerializer serializer = new(new ConstIdProvider(123));
 
     [TestCase(1, "1")]
     [TestCase(1.1d, "1.1")]

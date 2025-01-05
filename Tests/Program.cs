@@ -10,7 +10,7 @@ static class Program
     public static unsafe void Test1()
     {
         // var buffer = new RdxBuffer(1024);
-        var serializer = new RdxSerializer();
+        var serializer = new RdxSerializer(new ConstIdProvider());
         var factory = new RdxObjectFactory(new ConstIdProvider());
 
         var t1 = factory.NewTuple(1, factory.NewValue(2));

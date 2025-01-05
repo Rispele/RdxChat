@@ -4,14 +4,26 @@ using System.Reflection;
 using Rdx.Extensions;
 using Rdx.Objects;
 using Rdx.Serialization.Attributes;
+using Rdx.Serialization.Parser;
+using Rdx.Serialization.RdxToObjectConverter;
+using Rdx.Serialization.Tokenizer;
 
 namespace Rdx.Serialization;
 
 public class RdxSerializer
 {
+    private readonly IReplicaIdProvider replicaIdProvider;
+    private readonly SimpleConverter simpleConverter;
+    
     private readonly ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers = new();
     private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes = new();
 
+    public RdxSerializer(IReplicaIdProvider replicaIdProvider)
+    {
+        this.replicaIdProvider = replicaIdProvider;
+        simpleConverter = new SimpleConverter(replicaIdProvider);
+    }
+    
     #region serialization
 
     public string Serialize(object obj)
@@ -92,14 +104,20 @@ public class RdxSerializer
 
     #region deserialization
 
-    // public object Deserialize(Type type, string jRdx)
-    // {
-    //     var serializer = type.FindRdxSerializerAttribute(knownSerializers);
-    //     if (serializer is not null)
-    //     {
-    //         return serializer.Serialize(this, obj);
-    //     }
-    // }
+    public TType Deserialize<TType>(string jRdx)
+    {
+        return (TType) Deserialize(typeof(TType), jRdx);
+    }
+    
+    public object Deserialize(Type type, string jRdx)
+    {
+        var tokenSource = new RdxTokenizer(jRdx).Tokenize();
+        var parser = new RdxParser(new TokensReader(tokenSource, jRdx));
+        var parsed = parser.Parse();
+        
+        var converted = simpleConverter.ConvertToType(type, parsed);
+        return converted;
+    }
 
     #endregion
 }
