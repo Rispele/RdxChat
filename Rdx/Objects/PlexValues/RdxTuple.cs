@@ -4,7 +4,7 @@ using Rdx.Serialization.Attributes;
 namespace Rdx.Objects.PlexValues;
 
 [RdxXPleSerializer]
-public class RdxTuple<T1, T2> : RdxPLEX 
+public class RdxTuple<T1, T2> : RdxPLEX
     where T1 : notnull
     where T2 : notnull
 {
