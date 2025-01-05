@@ -37,7 +37,7 @@ public partial class RdxSerializer
             new StringValueParser(),
         ];
 
-        simpleConverter = new SimpleConverter(replicaIdProvider, parsers.Concat(customParsers).ToArray());
+        simpleConverter = new SimpleConverter(replicaIdProvider, parsers.Concat(customParsers).ToArray(), knownTypes);
     }
 
     #region serialization

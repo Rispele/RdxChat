@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Concurrent;
+using System.Reflection;
 using Rdx.Extensions;
 using Rdx.Objects;
 using Rdx.Objects.PlexValues;
@@ -12,10 +13,15 @@ public class SimpleConverter
 {
     private readonly Dictionary<Type, ValueParserBase> valueParsers;
     private readonly IReplicaIdProvider replicaIdProvider;
+    private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes;
 
-    public SimpleConverter(IReplicaIdProvider replicaIdProvider, ValueParserBase[] valueParsers)
+    public SimpleConverter(
+        IReplicaIdProvider replicaIdProvider,
+        ValueParserBase[] valueParsers,
+        ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes)
     {
         this.replicaIdProvider = replicaIdProvider;
+        this.knownTypes = knownTypes;
         this.valueParsers = valueParsers.ToDictionary(t => t.TargetType);
     }
 
@@ -58,14 +64,16 @@ public class SimpleConverter
         return FillObjectWithParameterValues(type, dict);
     }
 
-    private object FillObjectWithParameterValues(Type type, Dictionary<string, object> dict)
+    private object FillObjectWithParameterValues(
+        Type type,
+        Dictionary<string, object> dict)
     {
         var instance = type.GetConstructor(
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
                 [])?
             .Invoke([]) ?? throw new MissingMethodException($"Could not find constructor for type {type}");
 
-        var properties = type.GetObjectProperties();
+        var properties = type.GetObjectProperties(knownTypes);
 
         foreach (var (name, propertyInfo) in properties)
         {
