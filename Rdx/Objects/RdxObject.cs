@@ -1,8 +1,10 @@
+using JetBrains.Annotations;
+
 namespace Rdx.Objects;
 
 public abstract class RdxObject
 {
-    private readonly long currentReplicaId;
+    private long CurrentReplicaId { get; [UsedImplicitly] set; }
     private bool updated;
     
     public long ReplicaId { get; private set; }
@@ -13,7 +15,7 @@ public abstract class RdxObject
         ReplicaId = replicaId;
         Version = version;
 
-        this.currentReplicaId = currentReplicaId;
+        CurrentReplicaId = currentReplicaId;
     }
 
     protected void UpdateObject()
@@ -23,7 +25,7 @@ public abstract class RdxObject
             return;
         }
 
-        ReplicaId = currentReplicaId;
+        ReplicaId = CurrentReplicaId;
         Version++;
         updated = true;
     }

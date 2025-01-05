@@ -4,7 +4,7 @@ public enum TokenType
 {
     OpeningBracket,
     ClosingBracket,
-    Timestamp,
+    TimestampMarker,
     Value,
     Colon,
     Comma

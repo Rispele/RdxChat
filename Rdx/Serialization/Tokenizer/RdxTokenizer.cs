@@ -1,57 +1,65 @@
-﻿using Rdx.Serialization.Tokenizer.Tokens;
+﻿using Rdx.Extensions;
+using Rdx.Serialization.Tokenizer.Tokens;
 
 namespace Rdx.Serialization.Tokenizer;
 
-public class RdxTokenizer
+public class RdxTokenizer(string jRdx)
 {
-    public static List<RdxToken> Tokenize(string jRdx)
+    private int beginOfLastToken = 0;
+    private int endOfLastToken = 0;
+
+    public IEnumerable<RdxToken> Tokenize()
     {
-        var tokens = new List<RdxToken>();
-        var beginOfNewToken = 0;
-        for (var i = 0; i < jRdx.Length; i++)
+        while (endOfLastToken < jRdx.Length)
         {
-            if (jRdx[i] == '<' || jRdx[i] == '{' || jRdx[i] == '[')
+            var symbol = jRdx[endOfLastToken];
+            foreach (var token in HandleSymbol(symbol))
             {
-                AddValueToken(i);
-                tokens.Add(RdxToken.OpeningBracket(i));
+                yield return token;
             }
 
-            if (jRdx[i] == '>' || jRdx[i] == '}' || jRdx[i] == ']')
-            {
-                AddValueToken(i);
-                tokens.Add(RdxToken.ClosingBracket(i));
-            }
+            endOfLastToken++;
+        }
+    }
 
-            if (jRdx[i] == ':')
-            {
-                AddValueToken(i);
-                tokens.Add(RdxToken.Colon(i));
-            }
+    private IEnumerable<RdxToken> HandleSymbol(char symbol)
+    {
+        return symbol switch
+        {
+            '<' or '{' or '[' => AddValueTokenWithSpecialSymbol(RdxToken.OpeningBracket),
+            '>' or '}' or ']' => AddValueTokenWithSpecialSymbol(RdxToken.ClosingBracket),
+            ':' => AddValueTokenWithSpecialSymbol(RdxToken.Colon),
+            ',' => AddValueTokenWithSpecialSymbol(RdxToken.Comma),
+            '@' => AddValueTokenWithSpecialSymbol(RdxToken.TimestampMarker),
+            ' ' => HandleSpace(),
+            _ => []
+        };
 
-            if (jRdx[i] == ',')
+        IEnumerable<RdxToken> AddValueTokenWithSpecialSymbol(Func<int, RdxToken> factory)
+        {
+            var token = AddValueToken();
+            if (token is not null)
             {
-                AddValueToken(i);
-                tokens.Add(RdxToken.Comma(i));
+                yield return token;
             }
-
-            if (jRdx[i] == ' ')
-            {
-                AddValueToken(i);
-            }
+            
+            yield return factory(endOfLastToken);
+            
+            beginOfLastToken = endOfLastToken + 1;
         }
 
-        return tokens;
-
-        void AddValueToken(int i)
+        IEnumerable<RdxToken> HandleSpace()
         {
-            if (beginOfNewToken != i)
-            {
-                tokens.Add(jRdx[beginOfNewToken] == '@'
-                    ? RdxToken.Timestamp(beginOfNewToken, i - beginOfNewToken)
-                    : RdxToken.Value(beginOfNewToken, i - beginOfNewToken));
-            }
-
-            beginOfNewToken = i + 1;
+            var token = AddValueToken();
+            beginOfLastToken = endOfLastToken + 1;
+            return token?.AsEnumerable() ?? [];
         }
+    }
+
+    private RdxToken? AddValueToken()
+    {
+        return beginOfLastToken == endOfLastToken
+            ? null
+            : RdxToken.Value(beginOfLastToken, endOfLastToken - beginOfLastToken);
     }
 }

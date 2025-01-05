@@ -74,7 +74,7 @@ public class RdxSerializer
 
     private IEnumerable<string> SerializeCustomObjectInner(object obj)
     {
-        var properties = obj.GetObjectProperties(knownTypes);
+        var properties = obj.GetType().GetObjectProperties(knownTypes);
         foreach (var (name, property) in properties)
         {
             var value = property.GetValue(obj);

@@ -40,10 +40,9 @@ public static class ObjectExtensions
     }
 
     public static (string name, PropertyInfo propertyInfo)[] GetObjectProperties(
-        this object obj,
+        this Type objType,
         ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]>? knownTypes = null)
     {
-        var objType = obj.GetType();
         if (knownTypes?.TryGetValue(objType, out var result) ?? false)
         {
             return result;
@@ -65,5 +64,20 @@ public static class ObjectExtensions
         }
 
         return properties;
+    }
+    
+    public static IEnumerable<Type> GetParentTypes(this Type type)
+    {
+        foreach (var i in type.GetInterfaces())
+        {
+            yield return i;
+        }
+
+        var currentBaseType = type.BaseType;
+        while (currentBaseType != null)
+        {
+            yield return currentBaseType;
+            currentBaseType= currentBaseType.BaseType;
+        }
     }
 }
