@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Globalization;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Rdx.Extensions;
 using Rdx.Objects;
 using Rdx.Serialization.Attributes;
@@ -10,10 +11,13 @@ using Rdx.Serialization.Tokenizer;
 
 namespace Rdx.Serialization;
 
-public class RdxSerializer
+public partial class RdxSerializer
 {
     private readonly IReplicaIdProvider replicaIdProvider;
     private readonly SimpleConverter simpleConverter;
+    
+    [GeneratedRegex("\\s{2,}")]
+    private static partial Regex ClearJRdxRegex();
     
     private readonly ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers = new();
     private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes = new();
@@ -111,11 +115,11 @@ public class RdxSerializer
     
     public object Deserialize(Type type, string jRdx)
     {
-        var tokenSource = new RdxTokenizer(jRdx).Tokenize();
-        var parser = new RdxParser(new TokensReader(tokenSource, jRdx));
-        var parsed = parser.Parse();
+        var cleared = ClearJRdxRegex().Replace(jRdx.Trim(), " ");
+        var tokenSource = new RdxTokenizer(cleared).Tokenize();
+        var parser = new RdxParser(new TokensReader(tokenSource, cleared));
         
-        var converted = simpleConverter.ConvertToType(type, parsed);
+        var converted = simpleConverter.ConvertToType(type, parser.Parse());
         return converted;
     }
 

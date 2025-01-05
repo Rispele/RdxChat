@@ -16,8 +16,7 @@ public class RdxSerializer_CustomObject_Tests
 
     // private readonly string jRdx = ClearJRdxRegex().Replace(jRdx.Trim(), " ");
     //
-    // [GeneratedRegex("\\s{2,}")]
-    // private static partial Regex ClearJRdxRegex();
+    
 
     [TestCaseSource(nameof(TestCaseSource))]
     public void Serialize_Then_Deserialize_ShouldEquals(TestObjectOuter testObject)
