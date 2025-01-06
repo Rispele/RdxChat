@@ -19,6 +19,24 @@ public class RdxSerializer_DefaultCollections
         
         deserialized.Should().BeEquivalentTo(list);
     }
+    
+    [TestCaseSource(nameof(SerializeThenDeserializeHashSetTestCaseSource))]
+    public void HashSet_Serialize_Then_Deserialize_ShouldEquals(HashSet<int> hashSet)
+    {
+        var serialized = serializer.Serialize(hashSet);
+        var deserialized = serializer.Deserialize<HashSet<int>>(serialized);
+        
+        deserialized.Should().BeEquivalentTo(hashSet);
+    }
+    
+    [TestCaseSource(nameof(SerializeThenDeserializeDictionaryTestCaseSource))]
+    public void Dictionary_Serialize_Then_Deserialize_ShouldEquals(Dictionary<int, string> hashSet)
+    {
+        var serialized = serializer.Serialize(hashSet);
+        var deserialized = serializer.Deserialize<Dictionary<int, string>>(serialized);
+        
+        deserialized.Should().BeEquivalentTo(hashSet);
+    }
 
     public static IEnumerable<List<int>> SerializeThenDeserializeListTestCaseSource()
     {
@@ -26,6 +44,25 @@ public class RdxSerializer_DefaultCollections
         for (var i = 0; i < 10; i++)
         {
             yield return new List<int>(Enumerable.Range(0, rand.Next(10, 20)).Select(_ => rand.Next()));
+        }
+    }
+    
+    public static IEnumerable<HashSet<int>> SerializeThenDeserializeHashSetTestCaseSource()
+    {
+        var rand = new Random();
+        for (var i = 0; i < 10; i++)
+        {
+            yield return new HashSet<int>(Enumerable.Range(0, rand.Next(10, 20)).Select(_ => rand.Next()));
+        }
+    }
+    
+    public static IEnumerable<Dictionary<int, string>> SerializeThenDeserializeDictionaryTestCaseSource()
+    {
+        var rand = new Random();
+        for (var i = 0; i < 10; i++)
+        {
+            yield return new Dictionary<int, string>(
+                Enumerable.Range(0, rand.Next(10, 20)).ToDictionary(_ => rand.Next(), _ => rand.Next().ToString()));
         }
     }
 }

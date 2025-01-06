@@ -4,11 +4,7 @@ namespace Rdx.Objects;
 
 public abstract class RdxObject
 {
-    private long CurrentReplicaId { get; [UsedImplicitly] set; }
     private bool updated;
-    
-    public long ReplicaId { get; private set; }
-    public long Version { get; private set; }
 
     protected RdxObject(long replicaId, long version, long currentReplicaId)
     {
@@ -18,12 +14,14 @@ public abstract class RdxObject
         CurrentReplicaId = currentReplicaId;
     }
 
+    private long CurrentReplicaId { get; [UsedImplicitly] set; }
+
+    public long ReplicaId { get; private set; }
+    public long Version { get; private set; }
+
     protected void UpdateObject()
     {
-        if (updated)
-        {
-            return;
-        }
+        if (updated) return;
 
         ReplicaId = CurrentReplicaId;
         Version++;

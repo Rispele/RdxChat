@@ -8,12 +8,22 @@ public class RdxDictionary<TKey, TValue>(
     IDictionary<TKey, TValue> dictionary,
     long replicaId,
     long version,
-    long currentReplicaId) 
+    long currentReplicaId)
     : RdxPLEX(replicaId, version, currentReplicaId)
     where TKey : IComparable<TKey>
 {
     private readonly Dictionary<TKey, TValue> dictionary = dictionary.ToDictionary();
     public override int Count => dictionary.Count;
+
+    public TValue this[TKey key]
+    {
+        get => dictionary[key];
+        set
+        {
+            value.EnsureNotNull();
+            if (dictionary.TryAdd(key, value)) UpdateObject();
+        }
+    }
 
     public bool TryGetValue(TKey key, out TValue? value)
     {
@@ -24,20 +34,7 @@ public class RdxDictionary<TKey, TValue>(
     {
         return dictionary.ContainsKey(key);
     }
-    
-    public TValue this[TKey key]
-    {
-        get => dictionary[key];
-        set
-        {
-            value.EnsureNotNull();
-            if (dictionary.TryAdd(key, value))
-            { 
-                UpdateObject();
-            }
-        }
-    }
-    
+
     public override IEnumerator<object> GetEnumerator()
     {
         return dictionary

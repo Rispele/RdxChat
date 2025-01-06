@@ -27,42 +27,29 @@ public class RdxValueSerializerAttribute : RdxSerializerAttribute
     public override object Deserialize(SerializationArguments serializationArguments)
     {
         if (serializationArguments.Value is not ParserRdxValue value)
-        {
             throw new NotImplementedException("Object is not a ParserRdxValue");
-        }
 
         if (serializationArguments.Type == typeof(RdxValue<int>))
-        {
             return ConvertValue(int.Parse, value, serializationArguments.Serializer.GetReplicaId());
-        }
 
         if (serializationArguments.Type == typeof(RdxValue<double>))
-        {
             return ConvertValue(
                 parser => double.Parse(parser, CultureInfo.InvariantCulture),
                 value,
                 serializationArguments.Serializer.GetReplicaId());
-        }
 
         if (serializationArguments.Type == typeof(RdxValue<long>))
-        {
             return ConvertValue(long.Parse, value, serializationArguments.Serializer.GetReplicaId());
-        }
 
         if (serializationArguments.Type == typeof(RdxValue<bool>))
-        {
             return ConvertValue(bool.Parse, value, serializationArguments.Serializer.GetReplicaId());
-        }
 
         if (serializationArguments.Type == typeof(RdxValue<string>))
-        {
             return ConvertString(serializationArguments.Serializer, value);
-        }
 
         if (serializationArguments.Type == typeof(RdxValue<DateTime>))
-        {
-            return ConvertValue(t => DateTime.Parse(t, CultureInfo.InvariantCulture), value, serializationArguments.Serializer.GetReplicaId());
-        }
+            return ConvertValue(t => DateTime.Parse(t, CultureInfo.InvariantCulture), value,
+                serializationArguments.Serializer.GetReplicaId());
 
         throw new ArgumentException($"Type: {serializationArguments.Value.GetType()} is not allowed");
     }
@@ -72,10 +59,7 @@ public class RdxValueSerializerAttribute : RdxSerializerAttribute
         return ConvertValue(
             str =>
             {
-                if (!str.StartsWith('\"') || !str.EndsWith('\"'))
-                {
-                    throw new FormatException("Invalid RDX value");
-                }
+                if (!str.StartsWith('\"') || !str.EndsWith('\"')) throw new FormatException("Invalid RDX value");
 
                 return str[1..^1];
             },
@@ -90,15 +74,11 @@ public class RdxValueSerializerAttribute : RdxSerializerAttribute
         where TType : notnull
     {
         if (parserRdxValueObj is not ParserRdxValue parserRdxValue)
-        {
             throw new NotImplementedException("Object is not a ParserRdxValue");
-        }
 
         var value = parser(parserRdxValue.Value);
         if (parserRdxValue.Timestamp is null)
-        {
             throw new InvalidOperationException("Timestamp must be specified for rdx value");
-        }
 
         var (replicaId, version) = SerializationHelper.ParseTimestamp(parserRdxValue.Timestamp);
         return new RdxValue<TType>(value, replicaId, version, currentReplicaId);

@@ -7,7 +7,6 @@ namespace Rdx.Objects.PlexValues;
 public class RdxXPle<T> : RdxPLEX
 {
     private readonly List<T> items;
-    public override int Count => items.Count;
 
     public RdxXPle(
         List<T> items,
@@ -19,33 +18,35 @@ public class RdxXPle<T> : RdxPLEX
         this.items = items;
     }
 
+    public override int Count => items.Count;
+
+    public T this[int index]
+    {
+        get => (T)items[index]!;
+        set
+        {
+            value.EnsureNotNull();
+            items[index] = value;
+
+            UpdateObject();
+        }
+    }
+
     public void Add(T rdxObject)
     {
         items.Add(rdxObject!);
         UpdateObject();
     }
-    
+
     [Obsolete("Not supported by rdx merge")]
     public object RemoveAt(int index)
     {
         var value = items[index];
-        
+
         items.RemoveAt(index);
         UpdateObject();
 
         return value;
-    }
-
-    public T this[int index]
-    {
-        get => (T) items[index]!;
-        set
-        {
-            value.EnsureNotNull();
-            items[index] = value;
-           
-            UpdateObject();
-        }
     }
 
     public override int GetHashCode()

@@ -9,22 +9,15 @@ public static class RdxSerializationHelper
     {
         return $"@{rdxObject.ReplicaId:X}-{rdxObject.Version:X}";
     }
-    
-    public static (object, object) ConvertToTuple(RdxSerializer converter, Type type, object obj)
+
+    public static (object, object) ConvertToTuple(RdxSerializer converter, Type type1, Type type2, object obj)
     {
-        if (obj is not ParserRdxPlex plex)
-        {
-            throw new NotImplementedException("Object is not a plex");
-        }
+        if (obj is not ParserRdxPlex plex) throw new NotImplementedException("Object is not a plex");
 
-        if (plex.Value.Count != 2)
-        {
-            throw new InvalidOperationException("Tuple must have 2 items");
-        }
+        if (plex.Value.Count != 2) throw new InvalidOperationException("Tuple must have 2 items");
 
-        var genericType = type.GetGenericArguments();
-        var value1 = converter.ConvertToType(genericType[0], plex.Value[0]);
-        var value2 = converter.ConvertToType(genericType[1], plex.Value[1]);
+        var value1 = converter.ConvertToType(type1, plex.Value[0]);
+        var value2 = converter.ConvertToType(type2, plex.Value[1]);
         return (value1, value2);
     }
 }

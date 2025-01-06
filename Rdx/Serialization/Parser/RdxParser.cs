@@ -10,14 +10,14 @@ public class RdxParser
     {
         this.tokensReader = tokensReader;
     }
-    
+
     public object Parse()
     {
-        return tokensReader.GetTokenType() == TokenType.OpeningBracket 
-            ? ParsePlex() 
+        return tokensReader.GetTokenType() == TokenType.OpeningBracket
+            ? ParsePlex()
             : ParseValue();
     }
-    
+
     private object ParsePlex()
     {
         var result = new List<object>();
@@ -39,15 +39,13 @@ public class RdxParser
             }
 
             if (tokensReader.GetValue() != closingBracketType)
-            {
                 throw new InvalidOperationException("closing bracket mismatch");
-            }
 
             tokensReader.MoveNext();
             return new ParserRdxPlex(GetPlexType(bracketType), result, timestamp);
         }
     }
-    
+
     private static string GetClosingBracket(string bracketType)
     {
         return bracketType switch
@@ -77,10 +75,7 @@ public class RdxParser
 
     private string? ParseTimestamp()
     {
-        if (tokensReader.GetTokenType() != TokenType.TimestampMarker)
-        {
-            return null;
-        }
+        if (tokensReader.GetTokenType() != TokenType.TimestampMarker) return null;
 
         tokensReader.MoveNext();
         return tokensReader.GetValueAndMoveNext();

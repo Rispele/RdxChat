@@ -7,9 +7,18 @@ namespace Rdx.Objects.ValueObjects;
 /// Possible values: string, int, long, double, bool, DateTime
 [RdxValueSerializer]
 public sealed class RdxValue<TValue> : RdxObject
-    where TValue: notnull
+    where TValue : notnull
 {
     private TValue value;
+
+    public RdxValue(TValue value, long replicaId, long version, long currentReplicaId)
+        : base(replicaId, version, currentReplicaId)
+    {
+        value.EnsureNotNull();
+        value.GetType().EnsureTypeAllowedAsRdxValueType();
+
+        this.value = value;
+    }
 
     public TValue Value
     {
@@ -22,15 +31,6 @@ public sealed class RdxValue<TValue> : RdxObject
             this.value = value;
             UpdateObject();
         }
-    }
-
-    public RdxValue(TValue value, long replicaId, long version, long currentReplicaId)
-        : base(replicaId, version, currentReplicaId)
-    {
-        value.EnsureNotNull();
-        value.GetType().EnsureTypeAllowedAsRdxValueType();
-
-        this.value = value;
     }
 
     public override int GetHashCode()

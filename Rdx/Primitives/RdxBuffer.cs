@@ -6,13 +6,9 @@ namespace Rdx.Primitives;
 
 public class RdxBuffer : IDisposable
 {
+    public readonly IntPtr buffer;
     private readonly int length;
     private readonly RdxSerializer serializer;
-    public readonly IntPtr buffer;
-
-    public RdxBufferSlice FreeBufferSlice { get; private set; }
-
-    public int WrittenLength => (int)(FreeBufferSlice.From - buffer);
 
     public RdxBuffer(int length, RdxSerializer serializer)
     {
@@ -21,7 +17,16 @@ public class RdxBuffer : IDisposable
         buffer = Marshal.AllocHGlobal(length);
         FreeBufferSlice = new RdxBufferSlice(buffer, buffer + length);
     }
-    
+
+    public RdxBufferSlice FreeBufferSlice { get; private set; }
+
+    public int WrittenLength => (int)(FreeBufferSlice.From - buffer);
+
+    public void Dispose()
+    {
+        Marshal.FreeHGlobal(buffer);
+    }
+
     public RdxBufferSlice AppendObject(string rdxObject)
     {
         var serializedBegin = Marshal.StringToHGlobalAnsi(rdxObject);
@@ -29,9 +34,9 @@ public class RdxBuffer : IDisposable
 
         var tlvBegin = FreeBufferSlice.From;
         RdxExportedFunctions.RDXJdrainExport(FreeBufferSlice.Borders, [serializedBegin, serializedEnd]);
-        
+
         Marshal.FreeHGlobal(serializedBegin);
-        
+
         return new RdxBufferSlice(tlvBegin, FreeBufferSlice.From);
     }
 
@@ -43,12 +48,12 @@ public class RdxBuffer : IDisposable
 
         var tlvBegin = FreeBufferSlice.From;
         RdxExportedFunctions.RDXJdrainExport(FreeBufferSlice.Borders, [serializedBegin, serializedEnd]);
-        
+
         Marshal.FreeHGlobal(serializedBegin);
-        
+
         return new RdxBufferSlice(tlvBegin, FreeBufferSlice.From);
     }
-    
+
     public RdxBufferSlice[] AppendObjects(RdxObject[] objects)
     {
         return objects.Select(AppendObject).ToArray();
@@ -57,7 +62,7 @@ public class RdxBuffer : IDisposable
     public RdxBufferSlice Merge(RdxBufferSlice[] slices)
     {
         using var sliceOfSlices = RdxSlice.Create(slices);
-        
+
         var beginOfMerged = FreeBufferSlice.From;
         RdxExportedFunctions.RDXYExport(FreeBufferSlice.Borders, sliceOfSlices.Borders);
         var endOfMerged = FreeBufferSlice.From;
@@ -73,14 +78,9 @@ public class RdxBuffer : IDisposable
 
         return Marshal.PtrToStringAnsi(beginExtracted, (int)(endOfExtracted - beginExtracted));
     }
-    
+
     public void Clear()
     {
         FreeBufferSlice = new RdxBufferSlice(buffer, buffer + length);
-    }
-    
-    public void Dispose()
-    {
-        Marshal.FreeHGlobal(buffer);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Text;
 using Rdx.Objects.PlexValues;
 using Rdx.Serialization.Parser;
 
@@ -8,10 +9,7 @@ public class RdxDictionarySerializerAttribute : RdxSerializerAttribute
 {
     public override string Serialize(RdxSerializer serializer, object obj)
     {
-        if (obj is not RdxPLEX xPle)
-        {
-            throw new ArgumentException("Value must be a type of RdxPLEX");
-        }
+        if (obj is not RdxPLEX xPle) throw new ArgumentException("Value must be a type of RdxPLEX");
 
         var sb = new StringBuilder();
 
@@ -23,10 +21,7 @@ public class RdxDictionarySerializerAttribute : RdxSerializerAttribute
             sb.Append($"<{serializedA}:{serializedB}>").Append(", ");
         }
 
-        if (xPle.Count != 0)
-        {
-            sb.Remove(sb.Length - 2, 2);
-        }
+        if (xPle.Count != 0) sb.Remove(sb.Length - 2, 2);
 
         sb.Append('}');
 
@@ -36,30 +31,27 @@ public class RdxDictionarySerializerAttribute : RdxSerializerAttribute
     public override object Deserialize(SerializationArguments serializationArguments)
     {
         if (serializationArguments.Value is not ParserRdxPlex plex)
-        {
             throw new NotImplementedException("Object is not a plex");
-        }
 
-        if (plex.PlexType is not PlexType.Eulerian)
-        {
-            throw new NotImplementedException("Object is not an Eulerian Plex");
-        }
-        
+        if (plex.PlexType is not PlexType.Eulerian) throw new NotImplementedException("Object is not an Eulerian Plex");
+
+        var timestamp = plex.Timestamp ?? throw new InvalidOperationException();
         var genericTypes = serializationArguments.Type.GetGenericArguments();
-        var (replicaId, version) = SerializationHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
+        var (replicaId, version) = SerializationHelper.ParseTimestamp(timestamp);
         var values = plex.Value
-            .Select(value => RdxSerializationHelper.ConvertToTuple(serializationArguments.Serializer, typeof(ValueTuple<,>).MakeGenericType(genericTypes), value))
-            .ToArray();
+            .Select(value => RdxSerializationHelper.ConvertToTuple(
+                serializationArguments.Serializer,
+                genericTypes[0],
+                genericTypes[1],
+                value));
 
         var dictionaryType = typeof(Dictionary<,>).MakeGenericType(genericTypes);
-        var dictionary = Activator.CreateInstance(dictionaryType);
-        var addMethod = dictionaryType.GetMethod("Add")!;
-        foreach (var (key, value) in values)
-        {
-            addMethod.Invoke(dictionary, [key, value]);
-        }
+        var dictionary = (IDictionary)Activator.CreateInstance(dictionaryType)!;
+        foreach (var (key, value) in values) dictionary.Add(key, value);
         return serializationArguments.Type
-            .GetConstructor([typeof(IDictionary<,>).MakeGenericType(genericTypes), typeof(long), typeof(long), typeof(long)])!
+            .GetConstructor([
+                typeof(IDictionary<,>).MakeGenericType(genericTypes), typeof(long), typeof(long), typeof(long)
+            ])!
             .Invoke([dictionary, replicaId, version, serializationArguments.Serializer.GetReplicaId()]);
     }
 }

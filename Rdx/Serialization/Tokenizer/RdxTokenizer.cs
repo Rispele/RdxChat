@@ -5,18 +5,15 @@ namespace Rdx.Serialization.Tokenizer;
 
 public class RdxTokenizer(string jRdx)
 {
-    private int beginOfLastToken = 0;
-    private int endOfLastToken = 0;
+    private int beginOfLastToken;
+    private int endOfLastToken;
 
     public IEnumerable<RdxToken> Tokenize()
     {
         while (endOfLastToken < jRdx.Length)
         {
             var symbol = jRdx[endOfLastToken];
-            foreach (var token in HandleSymbol(symbol))
-            {
-                yield return token;
-            }
+            foreach (var token in HandleSymbol(symbol)) yield return token;
 
             endOfLastToken++;
         }
@@ -38,13 +35,10 @@ public class RdxTokenizer(string jRdx)
         IEnumerable<RdxToken> AddValueTokenWithSpecialSymbol(Func<int, RdxToken> factory)
         {
             var token = AddValueToken();
-            if (token is not null)
-            {
-                yield return token;
-            }
-            
+            if (token is not null) yield return token;
+
             yield return factory(endOfLastToken);
-            
+
             beginOfLastToken = endOfLastToken + 1;
         }
 

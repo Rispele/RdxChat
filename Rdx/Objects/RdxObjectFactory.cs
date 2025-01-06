@@ -19,7 +19,7 @@ public class RdxObjectFactory
     }
 
     public RdxValue<T> NewValue<T>(T value)
-        where T: notnull
+        where T : notnull
     {
         var replicaId = replicaIdProvider.GetReplicaId();
         return new RdxValue<T>(value, replicaId, InitialVersion, replicaId);
@@ -31,7 +31,7 @@ public class RdxObjectFactory
     {
         return new RdxTuple<T1, T2>(first, second, replicaId, version, replicaIdProvider.GetReplicaId());
     }
-    
+
     public RdxTuple<T1, T2> NewTuple<T1, T2>(T1 first, T2 second)
         where T1 : notnull
         where T2 : notnull

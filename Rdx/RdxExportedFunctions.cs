@@ -5,13 +5,13 @@ namespace Rdx;
 public static class RdxExportedFunctions
 {
     private const string libName = "liblibrdx.so";
-    
-    [DllImport(libName)]
-    public static extern unsafe ulong RDXJdrainExport(IntPtr[] tlv, IntPtr[] rdxj);
 
     [DllImport(libName)]
-    public static extern unsafe ulong RDXJfeedExport(IntPtr[] jrdx, IntPtr[] tlv);
+    public static extern ulong RDXJdrainExport(IntPtr[] tlv, IntPtr[] rdxj);
 
     [DllImport(libName)]
-    public static extern unsafe ulong RDXYExport(IntPtr[] into, IntPtr[] inputs);
+    public static extern ulong RDXJfeedExport(IntPtr[] jrdx, IntPtr[] tlv);
+
+    [DllImport(libName)]
+    public static extern ulong RDXYExport(IntPtr[] into, IntPtr[] inputs);
 }
