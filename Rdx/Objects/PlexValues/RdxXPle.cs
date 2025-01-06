@@ -1,5 +1,3 @@
-using System.Collections;
-using JetBrains.Annotations;
 using Rdx.Extensions;
 using Rdx.Serialization.Attributes;
 
@@ -8,29 +6,31 @@ namespace Rdx.Objects.PlexValues;
 [RdxXPleSerializer]
 public class RdxXPle<T> : RdxPLEX
 {
-    public override int Count => Items.Count;
+    private readonly List<T> items;
+    public override int Count => items.Count;
 
     public RdxXPle(
-        List<object> items,
+        List<T> items,
         long replicaId,
         long version,
         long currentReplicaId)
-        : base(items, replicaId, version, currentReplicaId)
+        : base(replicaId, version, currentReplicaId)
     {
+        this.items = items;
     }
 
     public void Add(T rdxObject)
     {
-        Items.Add(rdxObject!);
+        items.Add(rdxObject!);
         UpdateObject();
     }
     
     [Obsolete("Not supported by rdx merge")]
     public object RemoveAt(int index)
     {
-        var value = Items[index];
+        var value = items[index];
         
-        Items.RemoveAt(index);
+        items.RemoveAt(index);
         UpdateObject();
 
         return value;
@@ -38,13 +38,23 @@ public class RdxXPle<T> : RdxPLEX
 
     public T this[int index]
     {
-        get => (T) Items[index]!;
+        get => (T) items[index]!;
         set
         {
             value.EnsureNotNull();
-            Items[index] = value;
+            items[index] = value;
            
             UpdateObject();
         }
+    }
+
+    public override int GetHashCode()
+    {
+        return items[0].GetHashCode();
+    }
+
+    public override IEnumerator<object> GetEnumerator()
+    {
+        return items.Cast<object>().GetEnumerator();
     }
 }

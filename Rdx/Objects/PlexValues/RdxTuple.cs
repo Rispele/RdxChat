@@ -9,35 +9,52 @@ public class RdxTuple<T1, T2> : RdxPLEX
     where T2 : notnull
 {
     public override int Count => 2;
+    
+    public override IEnumerator<object> GetEnumerator()
+    {
+        yield return First;
+        yield return Second;
+    }
 
+    private T1 first;
     public T1 First
     {
-        get => (T1)Items[0];
+        get => first;
         set
         {
             value.EnsureNotNull();
-            Items[0] = value;
+            first = value;
 
             UpdateObject();
         }
     }
 
+    private T2 second;
     public T2 Second
     {
-        get => (T2)Items[1];
+        get => second;
         set
         {
             value.EnsureNotNull();
-            Items[1] = value;
+            second = value;
 
             UpdateObject();
         }
     }
 
     public RdxTuple(T1 first, T2 second, long replicaId, long version, long currentReplicaId)
-        : base([first, second], replicaId, version, currentReplicaId)
+        : base(replicaId, version, currentReplicaId)
     {
         first.EnsureNotNull();
         second.EnsureNotNull();
+        
+        this.first = first;
+        this.second = second;
     }
+    
+    public override int GetHashCode()
+    {
+        return First.GetHashCode();
+    }
+
 }

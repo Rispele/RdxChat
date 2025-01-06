@@ -32,4 +32,9 @@ public sealed class RdxValue<TValue> : RdxObject
 
         this.value = value;
     }
+
+    public override int GetHashCode()
+    {
+        return value.GetHashCode();
+    }
 }
