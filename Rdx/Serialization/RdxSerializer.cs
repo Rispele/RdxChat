@@ -23,21 +23,25 @@ public partial class RdxSerializer
     private readonly ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers = new();
     private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes = new();
 
-    public RdxSerializer(IReplicaIdProvider replicaIdProvider, params ValueParserBase[] customParsers)
+    public RdxSerializer(IReplicaIdProvider replicaIdProvider, params DefaultConverterBase[] customParsers)
     {
         this.replicaIdProvider = replicaIdProvider;
 
-        ValueParserBase[] parsers =
+        DefaultConverterBase[] parsers =
         [
-            new BoolValueParser(),
-            new DateTimeValueParser(),
-            new DoubleValueParser(),
-            new IntValueParser(),
-            new LongValueParser(),
-            new StringValueParser(),
+            new BoolConverter(),
+            new DateTimeConverter(),
+            new DoubleConverter(),
+            new IntConverter(),
+            new LongConverter(),
+            new StringConverter(),
         ];
 
-        simpleConverter = new SimpleConverter(replicaIdProvider, parsers.Concat(customParsers).ToArray(), knownTypes);
+        simpleConverter = new SimpleConverter(
+            replicaIdProvider,
+            parsers.Concat(customParsers).ToArray(),
+            knownSerializers,
+            knownTypes);
     }
 
     #region serialization

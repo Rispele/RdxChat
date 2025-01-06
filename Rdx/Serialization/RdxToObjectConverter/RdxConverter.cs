@@ -2,8 +2,7 @@
 using System.Reflection;
 using Rdx.Extensions;
 using Rdx.Objects;
-using Rdx.Objects.PlexValues;
-using Rdx.Objects.ValueObjects;
+using Rdx.Serialization.Attributes;
 using Rdx.Serialization.Parser;
 using Rdx.Serialization.RdxToObjectConverter.ValueParsers;
 
@@ -11,121 +10,58 @@ namespace Rdx.Serialization.RdxToObjectConverter;
 
 public class SimpleConverter
 {
-    private readonly Dictionary<Type, ValueParserBase> valueParsers;
+    private readonly DefaultConverterBase[] defaultConverters;
     private readonly IReplicaIdProvider replicaIdProvider;
+    private readonly ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers;
     private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes;
 
     public SimpleConverter(
         IReplicaIdProvider replicaIdProvider,
-        ValueParserBase[] valueParsers,
+        DefaultConverterBase[] defaultConverters,
+        ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers,
         ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes)
     {
         this.replicaIdProvider = replicaIdProvider;
+        this.knownSerializers = knownSerializers;
         this.knownTypes = knownTypes;
-        this.valueParsers = valueParsers.ToDictionary(t => t.TargetType);
+        this.defaultConverters = defaultConverters;
     }
+
+    public long GetReplicaId() => replicaIdProvider.GetReplicaId();
 
     public object ConvertToType(Type type, object obj)
     {
-        if (TryConvertGenericType(type, obj, out var convertToRdxValue))
+        var serializer = type.FindRdxSerializerAttribute(knownSerializers);
+        if (serializer is not null)
         {
-            return convertToRdxValue!;
+            return serializer.Deserialize(this, type, obj);
         }
 
-        if (valueParsers.ContainsKey(type))
+        if (TryConvertWithDefaultConverters(type, obj, out var converted))
         {
-            return ConvertToRdxValue(type, obj, false);
+            return converted!;
+        }
+
+        if (type.IsGenericType && TryConvertWithDefaultConverters(type.GetGenericTypeDefinition(), obj, out converted))
+        {
+            return converted!;
         }
 
         return ConvertToCustomObject(type, obj);
     }
 
-    private bool TryConvertGenericType(Type type, object obj, out object? converted)
+    private bool TryConvertWithDefaultConverters(Type type, object obj, out object? converted)
     {
-        converted = null;
-        if (!type.IsGenericType)
+        var converter = defaultConverters.FirstOrDefault(t => t.TargetType == type);
+
+        if (converter is null)
         {
-            return false;
-        }
-        
-        var genericDefinition = type.GetGenericTypeDefinition();
-        if (genericDefinition == typeof(List<>))
-        {
-            converted = ConvertToList(type, obj);
-        }
-        else if (genericDefinition == typeof(RdxValue<>))
-        {
-            converted = ConvertToRdxValue(type.GetGenericArguments().Single(), obj, true);
-        }
-        else if (genericDefinition == typeof(RdxXPle<>))
-        {
-            converted = ConvertToRdxXPle(type, obj);
-        }
-        else if (genericDefinition == typeof(RdxTuple<,>))
-        {
-            converted = ConvertToRdxTuple(type, obj);
-        }
-        else if (genericDefinition == typeof(RdxDictionary<,>))
-        {
-            converted = ConvertToRdxDictionary(type, obj);
-        }
-        else if (genericDefinition == typeof(ValueTuple<,>))
-        {
-            converted = ConvertToTuple(type, obj);
-        }
-        else if (genericDefinition == typeof(RdxSet<>))
-        {
-            converted = ConvertToRdxSet(type, obj);
-        }
-        else
-        {
+            converted = null;
             return false;
         }
 
+        converted = converter.Convert(obj, new ConverterArguments(this, type, GetReplicaId(), true));
         return true;
-    }
-
-    private object ConvertToRdxDictionary(Type type, object obj)
-    {
-        if (obj is not ParserRdxPlex plex)
-        {
-            throw new NotImplementedException("Object is not a plex");
-        }
-        
-        var genericTypes = type.GetGenericArguments();
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var values = plex.Value
-            .Select(value => ConvertToTuple(typeof(ValueTuple<,>).MakeGenericType(genericTypes), value))
-            .ToArray();
-
-        var dictionaryType = typeof(Dictionary<,>).MakeGenericType(genericTypes);
-        var dictionary = Activator.CreateInstance(dictionaryType);
-        var addMethod = dictionaryType.GetMethod("Add")!;
-        foreach (var (key, value) in values)
-        {
-            addMethod.Invoke(dictionary, [key, value]);
-        }
-        return type
-            .GetConstructor([typeof(IDictionary<,>).MakeGenericType(genericTypes), typeof(long), typeof(long), typeof(long)])!
-            .Invoke([dictionary, replicaId, version, replicaIdProvider.GetReplicaId()]);
-    }
-
-    private (object, object) ConvertToTuple(Type type, object obj)
-    {
-        if (obj is not ParserRdxPlex plex)
-        {
-            throw new NotImplementedException("Object is not a plex");
-        }
-
-        if (plex.Value.Count != 2)
-        {
-            throw new InvalidOperationException("Tuple must have 2 items");
-        }
-
-        var genericType = type.GetGenericArguments();
-        var value1 = ConvertToType(genericType[0], plex.Value[0]);
-        var value2 = ConvertToType(genericType[1], plex.Value[1]);
-        return (value1, value2);
     }
 
     private object ConvertToCustomObject(Type type, object obj)
@@ -169,7 +105,7 @@ public class SimpleConverter
         {
             throw new InvalidOperationException("Invalid structure");
         }
-        
+
         var dict = new Dictionary<string, object>();
         foreach (var plex in parserRdxPlex.Value.Cast<ParserRdxPlex>())
         {
@@ -188,103 +124,12 @@ public class SimpleConverter
             dict["ReplicaId"] = replicaId;
             dict["Version"] = version;
         }
-        
+
         if (type.GetParentTypes().Contains(typeof(RdxObject)))
         {
             dict["currentReplicaId"] = replicaIdProvider.GetReplicaId();
         }
 
         return dict;
-    }
-
-    private object ConvertToRdxValue(Type type, object obj, bool isRdxValue)
-    {
-        if (obj is not ParserRdxValue value)
-        {
-            throw new NotImplementedException("Object is not a ParserRdxValue");
-        }
-
-        if (!valueParsers.TryGetValue(type, out var parser))
-        {
-            throw new NotImplementedException($"Could not find parser for the given type {type}");
-        }
-
-        return parser.Parse(value, new ConverterArguments(replicaIdProvider.GetReplicaId(), isRdxValue));
-    }
-
-    private object ConvertToRdxTuple(Type type, object obj)
-    {
-        if (obj is not ParserRdxPlex plex)
-        {
-            throw new NotImplementedException("Object is not a plex");
-        }
-
-        if (plex.Value.Count != 2)
-        {
-            throw new InvalidOperationException("Tuple must have 2 items");
-        }
-
-        var genericType = type.GetGenericArguments();
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var value1 = ConvertToType(genericType[0], plex.Value[0]);
-        var value2 = ConvertToType(genericType[1], plex.Value[1]);
-        return type
-            .GetConstructor([genericType[0], genericType[1], typeof(long), typeof(long), typeof(long)])!
-            .Invoke([value1, value2, replicaId, version, replicaIdProvider.GetReplicaId()]);
-    }
-    
-    private object ConvertToRdxXPle(Type type, object obj)
-    {
-        if (obj is not ParserRdxPlex plex)
-        {
-            throw new NotImplementedException("Object is not a plex");
-        }
-
-        var genericType = type.GetGenericArguments().Single();
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var values = plex.Value.Select(value => ConvertToType(genericType, value)).ToList();
-        var listType = typeof(List<>).MakeGenericType(genericType);
-        var list = Activator.CreateInstance(listType, values.Capacity);
-        var addMethod = listType.GetMethod("Add")!;
-        foreach (var value in values)
-        {
-            addMethod.Invoke(list, [value]);
-        }
-        return type
-            .GetConstructor([listType, typeof(long), typeof(long), typeof(long)])!
-            .Invoke([list, replicaId, version, replicaIdProvider.GetReplicaId()]);
-    }
-    
-    private object ConvertToRdxSet(Type type, object obj)
-    {
-        if (obj is not ParserRdxPlex plex)
-        {
-            throw new NotImplementedException("Object is not a plex");
-        }
-
-        var genericType = type.GetGenericArguments().Single();
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var values = plex.Value.Select(value => ConvertToType(genericType, value)).ToList();
-        var setType = typeof(HashSet<>).MakeGenericType(genericType);
-        var set = Activator.CreateInstance(setType, values.Capacity);
-        var addMethod = setType.GetMethod("Add")!;
-        foreach (var value in values)
-        {
-            addMethod.Invoke(set, [value]);
-        }
-        return type
-            .GetConstructor([setType, typeof(long), typeof(long), typeof(long)])!
-            .Invoke([set, replicaId, version, replicaIdProvider.GetReplicaId()]);
-    }
-    
-    private object ConvertToList(Type type, object obj)
-    {
-        if (obj is not ParserRdxPlex plex)
-        {
-            throw new NotImplementedException("Object is not a plex");
-        }
-
-        var genericType = type.GetGenericArguments().Single();
-        return plex.Value.Select(value => ConvertToType(genericType, value)).ToList();
     }
 }

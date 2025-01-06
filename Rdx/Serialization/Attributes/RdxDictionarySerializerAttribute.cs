@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using Rdx.Objects.PlexValues;
+using Rdx.Serialization.Parser;
+using Rdx.Serialization.RdxToObjectConverter;
 
 namespace Rdx.Serialization.Attributes;
 
@@ -30,5 +32,30 @@ public class RdxDictionarySerializerAttribute : RdxSerializerAttribute
         sb.Append('}');
 
         return sb.ToString();
+    }
+
+    public override object Deserialize(SimpleConverter converter, Type type, object obj)
+    {
+        if (obj is not ParserRdxPlex plex)
+        {
+            throw new NotImplementedException("Object is not a plex");
+        }
+        
+        var genericTypes = type.GetGenericArguments();
+        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
+        var values = plex.Value
+            .Select(value => RdxSerializationHelper.ConvertToTuple(converter, typeof(ValueTuple<,>).MakeGenericType(genericTypes), value))
+            .ToArray();
+
+        var dictionaryType = typeof(Dictionary<,>).MakeGenericType(genericTypes);
+        var dictionary = Activator.CreateInstance(dictionaryType);
+        var addMethod = dictionaryType.GetMethod("Add")!;
+        foreach (var (key, value) in values)
+        {
+            addMethod.Invoke(dictionary, [key, value]);
+        }
+        return type
+            .GetConstructor([typeof(IDictionary<,>).MakeGenericType(genericTypes), typeof(long), typeof(long), typeof(long)])!
+            .Invoke([dictionary, replicaId, version, converter.GetReplicaId()]);
     }
 }

@@ -3,7 +3,7 @@ using Rdx.Serialization.Attributes;
 
 namespace Rdx.Objects.PlexValues;
 
-[RdxXPleSerializer]
+[RdxTupleSerializer]
 public class RdxTuple<T1, T2> : RdxPLEX
     where T1 : notnull
     where T2 : notnull
@@ -56,5 +56,4 @@ public class RdxTuple<T1, T2> : RdxPLEX
     {
         return First.GetHashCode();
     }
-
 }

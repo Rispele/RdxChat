@@ -5,7 +5,7 @@ using Rdx.Serialization.RdxToObjectConverter;
 
 namespace Rdx.Serialization.Attributes;
 
-public class RdxXPleSerializerAttribute : RdxSerializerAttribute
+public class RdxTupleSerializerAttribute : RdxSerializerAttribute
 {
     public override string Serialize(RdxSerializer serializer, object obj)
     {
@@ -39,18 +39,17 @@ public class RdxXPleSerializerAttribute : RdxSerializerAttribute
             throw new NotImplementedException("Object is not a plex");
         }
 
-        var genericType = type.GetGenericArguments().Single();
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var values = plex.Value.Select(value => converter.ConvertToType(genericType, value)).ToList();
-        var listType = typeof(List<>).MakeGenericType(genericType);
-        var list = Activator.CreateInstance(listType, values.Capacity);
-        var addMethod = listType.GetMethod("Add")!;
-        foreach (var value in values)
+        if (plex.Value.Count != 2)
         {
-            addMethod.Invoke(list, [value]);
+            throw new InvalidOperationException("Tuple must have 2 items");
         }
+
+        var genericType = type.GetGenericArguments();
+        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
+        var value1 = converter.ConvertToType(genericType[0], plex.Value[0]);
+        var value2 = converter.ConvertToType(genericType[1], plex.Value[1]);
         return type
-            .GetConstructor([listType, typeof(long), typeof(long), typeof(long)])!
-            .Invoke([list, replicaId, version, converter.GetReplicaId()]);
+            .GetConstructor([genericType[0], genericType[1], typeof(long), typeof(long), typeof(long)])!
+            .Invoke([value1, value2, replicaId, version, converter.GetReplicaId()]);
     }
 }
