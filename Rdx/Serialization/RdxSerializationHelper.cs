@@ -1,6 +1,5 @@
 using Rdx.Objects;
 using Rdx.Serialization.Parser;
-using Rdx.Serialization.RdxToObjectConverter;
 
 namespace Rdx.Serialization;
 
@@ -11,7 +10,7 @@ public static class RdxSerializationHelper
         return $"@{rdxObject.ReplicaId:X}-{rdxObject.Version:X}";
     }
     
-    public static (object, object) ConvertToTuple(SimpleConverter converter, Type type, object obj)
+    public static (object, object) ConvertToTuple(RdxSerializer converter, Type type, object obj)
     {
         if (obj is not ParserRdxPlex plex)
         {

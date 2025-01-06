@@ -1,7 +1,6 @@
 using System.Globalization;
 using Rdx.Objects.ValueObjects;
 using Rdx.Serialization.Parser;
-using Rdx.Serialization.RdxToObjectConverter;
 
 namespace Rdx.Serialization.Attributes;
 
@@ -25,50 +24,50 @@ public class RdxValueSerializerAttribute : RdxSerializerAttribute
         };
     }
 
-    public override object Deserialize(ConverterArguments converterArguments)
+    public override object Deserialize(SerializationArguments serializationArguments)
     {
-        if (converterArguments.Value is not ParserRdxValue value)
+        if (serializationArguments.Value is not ParserRdxValue value)
         {
             throw new NotImplementedException("Object is not a ParserRdxValue");
         }
 
-        if (converterArguments.Type == typeof(RdxValue<int>))
+        if (serializationArguments.Type == typeof(RdxValue<int>))
         {
-            return ConvertValue(int.Parse, value, converterArguments.Converter.GetReplicaId());
+            return ConvertValue(int.Parse, value, serializationArguments.Serializer.GetReplicaId());
         }
 
-        if (converterArguments.Type == typeof(RdxValue<double>))
+        if (serializationArguments.Type == typeof(RdxValue<double>))
         {
             return ConvertValue(
                 parser => double.Parse(parser, CultureInfo.InvariantCulture),
                 value,
-                converterArguments.Converter.GetReplicaId());
+                serializationArguments.Serializer.GetReplicaId());
         }
 
-        if (converterArguments.Type == typeof(RdxValue<long>))
+        if (serializationArguments.Type == typeof(RdxValue<long>))
         {
-            return ConvertValue(long.Parse, value, converterArguments.Converter.GetReplicaId());
+            return ConvertValue(long.Parse, value, serializationArguments.Serializer.GetReplicaId());
         }
 
-        if (converterArguments.Type == typeof(RdxValue<bool>))
+        if (serializationArguments.Type == typeof(RdxValue<bool>))
         {
-            return ConvertValue(bool.Parse, value, converterArguments.Converter.GetReplicaId());
+            return ConvertValue(bool.Parse, value, serializationArguments.Serializer.GetReplicaId());
         }
 
-        if (converterArguments.Type == typeof(RdxValue<string>))
+        if (serializationArguments.Type == typeof(RdxValue<string>))
         {
-            return ConvertString(converterArguments.Converter, value);
+            return ConvertString(serializationArguments.Serializer, value);
         }
 
-        if (converterArguments.Type == typeof(RdxValue<DateTime>))
+        if (serializationArguments.Type == typeof(RdxValue<DateTime>))
         {
-            return ConvertValue(t => DateTime.Parse(t, CultureInfo.InvariantCulture), value, converterArguments.Converter.GetReplicaId());
+            return ConvertValue(t => DateTime.Parse(t, CultureInfo.InvariantCulture), value, serializationArguments.Serializer.GetReplicaId());
         }
 
-        throw new ArgumentException($"Type: {converterArguments.Value.GetType()} is not allowed");
+        throw new ArgumentException($"Type: {serializationArguments.Value.GetType()} is not allowed");
     }
 
-    private object ConvertString(SimpleConverter converter, ParserRdxValue value)
+    private object ConvertString(RdxSerializer converter, ParserRdxValue value)
     {
         return ConvertValue(
             str =>
@@ -101,7 +100,7 @@ public class RdxValueSerializerAttribute : RdxSerializerAttribute
             throw new InvalidOperationException("Timestamp must be specified for rdx value");
         }
 
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(parserRdxValue.Timestamp);
+        var (replicaId, version) = SerializationHelper.ParseTimestamp(parserRdxValue.Timestamp);
         return new RdxValue<TType>(value, replicaId, version, currentReplicaId);
     }
 }

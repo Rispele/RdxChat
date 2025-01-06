@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using Rdx.Objects.PlexValues;
 using Rdx.Serialization.Parser;
-using Rdx.Serialization.RdxToObjectConverter;
 
 namespace Rdx.Serialization.Attributes;
 
@@ -32,9 +31,9 @@ public class RdxXPleSerializerAttribute : RdxSerializerAttribute
         return sb.ToString();
     }
 
-    public override object Deserialize(ConverterArguments converterArguments)
+    public override object Deserialize(SerializationArguments serializationArguments)
     {
-        if (converterArguments.Value is not ParserRdxPlex plex)
+        if (serializationArguments.Value is not ParserRdxPlex plex)
         {
             throw new NotImplementedException("Object is not a plex");
         }
@@ -44,9 +43,9 @@ public class RdxXPleSerializerAttribute : RdxSerializerAttribute
             throw new NotImplementedException("Object is not an XPles Plex");
         }
 
-        var genericType = converterArguments.Type.GetGenericArguments().Single();
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var values = plex.Value.Select(value => converterArguments.Converter.ConvertToType(genericType, value)).ToList();
+        var genericType = serializationArguments.Type.GetGenericArguments().Single();
+        var (replicaId, version) = SerializationHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
+        var values = plex.Value.Select(value => serializationArguments.Serializer.ConvertToType(genericType, value)).ToList();
         var listType = typeof(List<>).MakeGenericType(genericType);
         var list = Activator.CreateInstance(listType, values.Capacity);
         var addMethod = listType.GetMethod("Add")!;
@@ -54,8 +53,8 @@ public class RdxXPleSerializerAttribute : RdxSerializerAttribute
         {
             addMethod.Invoke(list, [value]);
         }
-        return converterArguments.Type
+        return serializationArguments.Type
             .GetConstructor([listType, typeof(long), typeof(long), typeof(long)])!
-            .Invoke([list, replicaId, version, converterArguments.Converter.GetReplicaId()]);
+            .Invoke([list, replicaId, version, serializationArguments.Serializer.GetReplicaId()]);
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
 
-namespace Rdx.Serialization.RdxToObjectConverter;
+namespace Rdx.Serialization.Attributes;
 
-public class ParsingHelper
+public static class SerializationHelper
 {
     public static (long replicaId, long version) ParseTimestamp(string timestamp)
     {

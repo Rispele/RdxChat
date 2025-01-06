@@ -5,19 +5,16 @@ using System.Text.RegularExpressions;
 using Rdx.Extensions;
 using Rdx.Objects;
 using Rdx.Serialization.Attributes;
+using Rdx.Serialization.DefaultConverters;
+using Rdx.Serialization.DefaultConverters.Collections;
+using Rdx.Serialization.DefaultConverters.Values;
 using Rdx.Serialization.Parser;
-using Rdx.Serialization.RdxToObjectConverter;
-using Rdx.Serialization.RdxToObjectConverter.DefaultConverters;
-using Rdx.Serialization.RdxToObjectConverter.DefaultConverters.Collections;
-using Rdx.Serialization.RdxToObjectConverter.DefaultConverters.Values;
 using Rdx.Serialization.Tokenizer;
 
 namespace Rdx.Serialization;
 
-public partial class RdxSerializer
+public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
 {
-    private readonly IReplicaIdProvider replicaIdProvider;
-    private readonly SimpleConverter simpleConverter;
     private readonly DefaultConverterBase[] defaultConverters =
     [
         new BoolConverter(),
@@ -34,17 +31,8 @@ public partial class RdxSerializer
 
     private readonly ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers = new();
     private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes = new();
-
-    public RdxSerializer(IReplicaIdProvider replicaIdProvider, params DefaultConverterBase[] customParsers)
-    {
-        this.replicaIdProvider = replicaIdProvider;
-        
-        simpleConverter = new SimpleConverter(
-            replicaIdProvider,
-            defaultConverters.Concat(customParsers).ToArray(),
-            knownSerializers,
-            knownTypes);
-    }
+    
+    public long GetReplicaId() => replicaIdProvider.GetReplicaId();
 
     #region serialization
 
@@ -131,8 +119,113 @@ public partial class RdxSerializer
         var tokenSource = new RdxTokenizer(cleared).Tokenize();
         var parser = new RdxParser(new TokensReader(tokenSource, cleared));
 
-        var converted = simpleConverter.ConvertToType(type, parser.Parse());
+        var converted = ConvertToType(type, parser.Parse());
         return converted;
+    }
+    
+
+    internal object ConvertToType(Type type, object obj)
+    {
+        var serializer = type.FindRdxSerializerAttribute(knownSerializers);
+        if (serializer is not null)
+        {
+            return serializer.Deserialize(new SerializationArguments(this, type, obj));
+        }
+
+        if (TryDeserializeWithDefaultConverters(type, obj, out var converted))
+        {
+            return converted!;
+        }
+
+        if (type.IsGenericType && TryDeserializeWithDefaultConverters(type.GetGenericTypeDefinition(), obj, out converted))
+        {
+            return converted!;
+        }
+
+        return ConvertToCustomObject(type, obj);
+    }
+
+    private bool TryDeserializeWithDefaultConverters(Type type, object obj, out object? converted)
+    {
+        var converter = defaultConverters.FirstOrDefault(t => t.TargetType == type);
+
+        if (converter is null)
+        {
+            converted = null;
+            return false;
+        }
+
+        converted = converter.Deserialize(new SerializationArguments(this, type, obj));
+        return true;
+    }
+
+    private object ConvertToCustomObject(Type type, object obj)
+    {
+        return FillObjectWithParameterValues(type, ExtractParameterValues(type, obj));
+    }
+
+    private object FillObjectWithParameterValues(
+        Type type,
+        Dictionary<string, object> dict)
+    {
+        var instance = type.GetConstructor(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                [])?
+            .Invoke([]) ?? throw new MissingMethodException($"Could not find constructor for type {type}");
+
+        var properties = type.GetObjectProperties(knownTypes);
+
+        foreach (var (name, propertyInfo) in properties)
+        {
+            if (!dict.TryGetValue(name, out var value))
+            {
+                continue;
+            }
+
+            var parsed = ConvertToType(propertyInfo.PropertyType, value);
+            propertyInfo.SetValue(instance, parsed);
+        }
+
+        return instance;
+    }
+
+    private Dictionary<string, object> ExtractParameterValues(Type type, object obj)
+    {
+        if (obj is not ParserRdxPlex parserRdxPlex)
+        {
+            throw new InvalidOperationException($"ParserRdxPlex expected, but was {obj.GetType()}");
+        }
+
+        if (parserRdxPlex.Value.Any(t => t is not ParserRdxPlex plex || plex.Value.Count != 2))
+        {
+            throw new InvalidOperationException("Invalid structure");
+        }
+
+        var dict = new Dictionary<string, object>();
+        foreach (var plex in parserRdxPlex.Value.Cast<ParserRdxPlex>())
+        {
+            if (plex.Value[0] is not ParserRdxValue keyValue)
+            {
+                throw new InvalidOperationException("Invalid structure: key value must be of type ParserRdxValue");
+            }
+
+            var key = keyValue.Value[1..^1];
+            dict[key] = plex.Value[1];
+        }
+
+        if (parserRdxPlex.Timestamp is not null)
+        {
+            var (replicaId, version) = SerializationHelper.ParseTimestamp(parserRdxPlex.Timestamp);
+            dict["ReplicaId"] = replicaId;
+            dict["Version"] = version;
+        }
+
+        if (type.GetParentTypes().Contains(typeof(RdxObject)))
+        {
+            dict["currentReplicaId"] = replicaIdProvider.GetReplicaId();
+        }
+
+        return dict;
     }
 
     #endregion

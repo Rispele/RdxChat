@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using Rdx.Objects.PlexValues;
 using Rdx.Serialization.Parser;
-using Rdx.Serialization.RdxToObjectConverter;
 
 namespace Rdx.Serialization.Attributes;
 
@@ -32,9 +31,9 @@ public class RdxTupleSerializerAttribute : RdxSerializerAttribute
         return sb.ToString();
     }
 
-    public override object Deserialize(ConverterArguments converterArguments)
+    public override object Deserialize(SerializationArguments serializationArguments)
     {
-        if (converterArguments.Value is not ParserRdxPlex plex)
+        if (serializationArguments.Value is not ParserRdxPlex plex)
         {
             throw new NotImplementedException("Object is not a plex");
         }
@@ -49,12 +48,12 @@ public class RdxTupleSerializerAttribute : RdxSerializerAttribute
             throw new InvalidOperationException("Tuple must have 2 items");
         }
 
-        var genericType = converterArguments.Type.GetGenericArguments();
-        var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var value1 = converterArguments.Converter.ConvertToType(genericType[0], plex.Value[0]);
-        var value2 = converterArguments.Converter.ConvertToType(genericType[1], plex.Value[1]);
-        return converterArguments.Type
+        var genericType = serializationArguments.Type.GetGenericArguments();
+        var (replicaId, version) = SerializationHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
+        var value1 = serializationArguments.Serializer.ConvertToType(genericType[0], plex.Value[0]);
+        var value2 = serializationArguments.Serializer.ConvertToType(genericType[1], plex.Value[1]);
+        return serializationArguments.Type
             .GetConstructor([genericType[0], genericType[1], typeof(long), typeof(long), typeof(long)])!
-            .Invoke([value1, value2, replicaId, version, converterArguments.Converter.GetReplicaId()]);
+            .Invoke([value1, value2, replicaId, version, serializationArguments.Serializer.GetReplicaId()]);
     }
 }

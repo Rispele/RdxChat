@@ -1,6 +1,6 @@
 ﻿using Rdx.Serialization.Parser;
 
-namespace Rdx.Serialization.RdxToObjectConverter.DefaultConverters.Collections;
+namespace Rdx.Serialization.DefaultConverters.Collections;
 
 public class ListConverter : DefaultConverterBase
 {
@@ -11,7 +11,7 @@ public class ListConverter : DefaultConverterBase
         throw new NotImplementedException();
     }
 
-    public override object Deserialize(ConverterArguments arguments)
+    public override object Deserialize(SerializationArguments arguments)
     {
         if (arguments.Value is not ParserRdxPlex plex)
         {
@@ -19,6 +19,6 @@ public class ListConverter : DefaultConverterBase
         }
 
         var genericType = arguments.Type.GetGenericArguments().Single();
-        return plex.Value.Select(t => arguments.Converter.ConvertToType(genericType, t)).ToList();
+        return plex.Value.Select(t => arguments.Serializer.ConvertToType(genericType, t)).ToList();
     }
 }

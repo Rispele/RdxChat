@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using Rdx.Serialization.Parser;
 
-namespace Rdx.Serialization.RdxToObjectConverter.DefaultConverters.Values;
+namespace Rdx.Serialization.DefaultConverters.Values;
 
 public class LongConverter : DefaultConverterBase
 {
@@ -16,7 +16,7 @@ public class LongConverter : DefaultConverterBase
         return longObj.ToString(CultureInfo.InvariantCulture);
     }
 
-    public override object Deserialize(ConverterArguments arguments)
+    public override object Deserialize(SerializationArguments arguments)
     {
         if (arguments.Value is not ParserRdxValue parserRdxValue)
         {
