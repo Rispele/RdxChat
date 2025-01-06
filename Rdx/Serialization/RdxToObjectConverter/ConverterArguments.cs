@@ -1,7 +1,3 @@
-﻿namespace Rdx.Serialization.RdxToObjectConverter.ValueParsers;
+﻿namespace Rdx.Serialization.RdxToObjectConverter;
 
-public record ConverterArguments(
-    SimpleConverter Converter,
-    Type Type,
-    long ReplicaId,
-    bool IsRdxValue);
+public record ConverterArguments(SimpleConverter Converter, Type Type, object Value);

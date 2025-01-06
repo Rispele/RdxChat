@@ -4,7 +4,7 @@ using Rdx.Extensions;
 using Rdx.Objects;
 using Rdx.Serialization.Attributes;
 using Rdx.Serialization.Parser;
-using Rdx.Serialization.RdxToObjectConverter.ValueParsers;
+using Rdx.Serialization.RdxToObjectConverter.DefaultConverters;
 
 namespace Rdx.Serialization.RdxToObjectConverter;
 
@@ -34,7 +34,7 @@ public class SimpleConverter
         var serializer = type.FindRdxSerializerAttribute(knownSerializers);
         if (serializer is not null)
         {
-            return serializer.Deserialize(this, type, obj);
+            return serializer.Deserialize(new ConverterArguments(this, type, obj));
         }
 
         if (TryConvertWithDefaultConverters(type, obj, out var converted))
@@ -60,7 +60,7 @@ public class SimpleConverter
             return false;
         }
 
-        converted = converter.Convert(obj, new ConverterArguments(this, type, GetReplicaId(), true));
+        converted = converter.Deserialize(new ConverterArguments(this, type, obj));
         return true;
     }
 

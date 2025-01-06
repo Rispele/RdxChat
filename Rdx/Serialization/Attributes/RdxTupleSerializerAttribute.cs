@@ -32,11 +32,16 @@ public class RdxTupleSerializerAttribute : RdxSerializerAttribute
         return sb.ToString();
     }
 
-    public override object Deserialize(SimpleConverter converter, Type type, object obj)
+    public override object Deserialize(ConverterArguments converterArguments)
     {
-        if (obj is not ParserRdxPlex plex)
+        if (converterArguments.Value is not ParserRdxPlex plex)
         {
             throw new NotImplementedException("Object is not a plex");
+        }
+        
+        if (plex.PlexType is not PlexType.XPles)
+        {
+            throw new NotImplementedException("Object is not an XPles Plex");
         }
 
         if (plex.Value.Count != 2)
@@ -44,12 +49,12 @@ public class RdxTupleSerializerAttribute : RdxSerializerAttribute
             throw new InvalidOperationException("Tuple must have 2 items");
         }
 
-        var genericType = type.GetGenericArguments();
+        var genericType = converterArguments.Type.GetGenericArguments();
         var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var value1 = converter.ConvertToType(genericType[0], plex.Value[0]);
-        var value2 = converter.ConvertToType(genericType[1], plex.Value[1]);
-        return type
+        var value1 = converterArguments.Converter.ConvertToType(genericType[0], plex.Value[0]);
+        var value2 = converterArguments.Converter.ConvertToType(genericType[1], plex.Value[1]);
+        return converterArguments.Type
             .GetConstructor([genericType[0], genericType[1], typeof(long), typeof(long), typeof(long)])!
-            .Invoke([value1, value2, replicaId, version, converter.GetReplicaId()]);
+            .Invoke([value1, value2, replicaId, version, converterArguments.Converter.GetReplicaId()]);
     }
 }

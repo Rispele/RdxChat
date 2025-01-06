@@ -7,5 +7,5 @@ public abstract class RdxSerializerAttribute : Attribute
 {
     public abstract string Serialize(RdxSerializer serializer, object obj);
     
-    public abstract object Deserialize(SimpleConverter converter, Type type, object obj);
+    public abstract object Deserialize(ConverterArguments converterArguments);
 }

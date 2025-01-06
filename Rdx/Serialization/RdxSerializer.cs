@@ -7,7 +7,9 @@ using Rdx.Objects;
 using Rdx.Serialization.Attributes;
 using Rdx.Serialization.Parser;
 using Rdx.Serialization.RdxToObjectConverter;
-using Rdx.Serialization.RdxToObjectConverter.ValueParsers;
+using Rdx.Serialization.RdxToObjectConverter.DefaultConverters;
+using Rdx.Serialization.RdxToObjectConverter.DefaultConverters.Collections;
+using Rdx.Serialization.RdxToObjectConverter.DefaultConverters.Values;
 using Rdx.Serialization.Tokenizer;
 
 namespace Rdx.Serialization;
@@ -16,7 +18,17 @@ public partial class RdxSerializer
 {
     private readonly IReplicaIdProvider replicaIdProvider;
     private readonly SimpleConverter simpleConverter;
-
+    private readonly DefaultConverterBase[] defaultConverters =
+    [
+        new BoolConverter(),
+        new DateTimeConverter(),
+        new DoubleConverter(),
+        new IntConverter(),
+        new LongConverter(),
+        new StringConverter(),
+        new ListConverter()
+    ];
+    
     [GeneratedRegex("\\s{2,}")]
     private static partial Regex ClearJRdxRegex();
 
@@ -26,20 +38,10 @@ public partial class RdxSerializer
     public RdxSerializer(IReplicaIdProvider replicaIdProvider, params DefaultConverterBase[] customParsers)
     {
         this.replicaIdProvider = replicaIdProvider;
-
-        DefaultConverterBase[] parsers =
-        [
-            new BoolConverter(),
-            new DateTimeConverter(),
-            new DoubleConverter(),
-            new IntConverter(),
-            new LongConverter(),
-            new StringConverter(),
-        ];
-
+        
         simpleConverter = new SimpleConverter(
             replicaIdProvider,
-            parsers.Concat(customParsers).ToArray(),
+            defaultConverters.Concat(customParsers).ToArray(),
             knownSerializers,
             knownTypes);
     }
@@ -59,44 +61,35 @@ public partial class RdxSerializer
             return SerializeCustomObject(rdxObject);
         }
 
-        if (TrySerializeValueObject(obj, out var result))
+        var type = obj.GetType();
+        if (TrySerializeWithDefaultConverters(type, obj, out var serialized))
         {
-            return result!;
+            return serialized!;
         }
 
-        if (obj is string objString)
+        if (type.IsGenericType && TrySerializeWithDefaultConverters(type.GetGenericTypeDefinition(), obj, out serialized))
         {
-            return $"\"{objString}\"";
+            return serialized!;
         }
 
         return SerializeCustomObject(obj);
     }
-
-    private bool TrySerializeValueObject(object obj, out string? result)
+    
+    private bool TrySerializeWithDefaultConverters(Type type, object obj, out string? serialized)
     {
-        switch (obj)
+        var converter = defaultConverters.FirstOrDefault(t => t.TargetType == type);
+
+        if (converter is null)
         {
-            case long longObj:
-                result = longObj.ToString();
-                return true;
-            case double doubleObj:
-                result = doubleObj.ToString(CultureInfo.InvariantCulture);
-                return true;
-            case int intObj:
-                result = intObj.ToString();
-                return true;
-            case bool boolObj:
-                result = boolObj.ToString(CultureInfo.InvariantCulture);
-                return true;
-            case DateTime dateTimeObj:
-                result = dateTimeObj.ToString(CultureInfo.InvariantCulture);
-                return true;
+            serialized = null;
+            return false;
         }
 
-        result = null;
-        return false;
+        serialized = converter.Serialize(this, obj);
+        return true;
     }
 
+    
     private string SerializeCustomObject(RdxObject obj)
     {
         return $"{{{RdxSerializationHelper.SerializeStamp(obj)} {string.Join(", ", SerializeCustomObjectInner(obj))}}}";

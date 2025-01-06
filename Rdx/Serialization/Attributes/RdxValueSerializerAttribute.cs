@@ -2,22 +2,11 @@ using System.Globalization;
 using Rdx.Objects.ValueObjects;
 using Rdx.Serialization.Parser;
 using Rdx.Serialization.RdxToObjectConverter;
-using Rdx.Serialization.RdxToObjectConverter.ValueParsers;
 
 namespace Rdx.Serialization.Attributes;
 
 public class RdxValueSerializerAttribute : RdxSerializerAttribute
 {
-    private readonly DefaultConverterBase[] parsers =
-    [
-        new BoolConverter(),
-        new DateTimeConverter(),
-        new DoubleConverter(),
-        new IntConverter(),
-        new LongConverter(),
-        new StringConverter(),
-    ];
-    
     public override string Serialize(RdxSerializer _, object obj)
     {
         return obj switch
@@ -36,55 +25,65 @@ public class RdxValueSerializerAttribute : RdxSerializerAttribute
         };
     }
 
-    public override object Deserialize(SimpleConverter converter, Type type, object obj)
+    public override object Deserialize(ConverterArguments converterArguments)
     {
-        if (obj is not ParserRdxValue value)
+        if (converterArguments.Value is not ParserRdxValue value)
         {
             throw new NotImplementedException("Object is not a ParserRdxValue");
         }
 
-        if (type == typeof(RdxValue<int>))
+        if (converterArguments.Type == typeof(RdxValue<int>))
         {
-            return ConvertValue(int.Parse, value, converter.GetReplicaId());
-        }
-        if (type == typeof(RdxValue<double>))
-        {
-            return ConvertValue(
-                t => double.Parse(t, CultureInfo.InvariantCulture),
-                value,
-                converter.GetReplicaId());
-        }
-        if (type == typeof(RdxValue<long>))
-        {
-            return ConvertValue(long.Parse, value, converter.GetReplicaId());
-        }
-        if (type == typeof(RdxValue<bool>))
-        {
-            return ConvertValue(bool.Parse, value, converter.GetReplicaId());
-        }
-        if (type == typeof(RdxValue<string>))
-        {
-            return ConvertValue(
-                str =>
-                {
-                    if (!str.StartsWith('\"') || !str.EndsWith('\"'))
-                    {
-                        throw new FormatException("Invalid RDX value");
-                    }
-
-                    return str[1..^1];
-                },
-                value,
-                converter.GetReplicaId());
-        }
-        if (type == typeof(RdxValue<DateTime>))
-        {
-            return ConvertValue(t => DateTime.Parse(t, CultureInfo.InvariantCulture), value, converter.GetReplicaId());
+            return ConvertValue(int.Parse, value, converterArguments.Converter.GetReplicaId());
         }
 
-        throw new ArgumentException($"Type: {obj.GetType()} is not allowed");
+        if (converterArguments.Type == typeof(RdxValue<double>))
+        {
+            return ConvertValue(
+                parser => double.Parse(parser, CultureInfo.InvariantCulture),
+                value,
+                converterArguments.Converter.GetReplicaId());
+        }
+
+        if (converterArguments.Type == typeof(RdxValue<long>))
+        {
+            return ConvertValue(long.Parse, value, converterArguments.Converter.GetReplicaId());
+        }
+
+        if (converterArguments.Type == typeof(RdxValue<bool>))
+        {
+            return ConvertValue(bool.Parse, value, converterArguments.Converter.GetReplicaId());
+        }
+
+        if (converterArguments.Type == typeof(RdxValue<string>))
+        {
+            return ConvertString(converterArguments.Converter, value);
+        }
+
+        if (converterArguments.Type == typeof(RdxValue<DateTime>))
+        {
+            return ConvertValue(t => DateTime.Parse(t, CultureInfo.InvariantCulture), value, converterArguments.Converter.GetReplicaId());
+        }
+
+        throw new ArgumentException($"Type: {converterArguments.Value.GetType()} is not allowed");
     }
-    
+
+    private object ConvertString(SimpleConverter converter, ParserRdxValue value)
+    {
+        return ConvertValue(
+            str =>
+            {
+                if (!str.StartsWith('\"') || !str.EndsWith('\"'))
+                {
+                    throw new FormatException("Invalid RDX value");
+                }
+
+                return str[1..^1];
+            },
+            value,
+            converter.GetReplicaId());
+    }
+
     private object ConvertValue<TType>(
         Func<string, TType> parser,
         object parserRdxValueObj,

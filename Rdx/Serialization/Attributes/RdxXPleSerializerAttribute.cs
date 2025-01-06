@@ -32,16 +32,21 @@ public class RdxXPleSerializerAttribute : RdxSerializerAttribute
         return sb.ToString();
     }
 
-    public override object Deserialize(SimpleConverter converter, Type type, object obj)
+    public override object Deserialize(ConverterArguments converterArguments)
     {
-        if (obj is not ParserRdxPlex plex)
+        if (converterArguments.Value is not ParserRdxPlex plex)
         {
             throw new NotImplementedException("Object is not a plex");
         }
+        
+        if (plex.PlexType is not PlexType.XPles)
+        {
+            throw new NotImplementedException("Object is not an XPles Plex");
+        }
 
-        var genericType = type.GetGenericArguments().Single();
+        var genericType = converterArguments.Type.GetGenericArguments().Single();
         var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
-        var values = plex.Value.Select(value => converter.ConvertToType(genericType, value)).ToList();
+        var values = plex.Value.Select(value => converterArguments.Converter.ConvertToType(genericType, value)).ToList();
         var listType = typeof(List<>).MakeGenericType(genericType);
         var list = Activator.CreateInstance(listType, values.Capacity);
         var addMethod = listType.GetMethod("Add")!;
@@ -49,8 +54,8 @@ public class RdxXPleSerializerAttribute : RdxSerializerAttribute
         {
             addMethod.Invoke(list, [value]);
         }
-        return type
+        return converterArguments.Type
             .GetConstructor([listType, typeof(long), typeof(long), typeof(long)])!
-            .Invoke([list, replicaId, version, converter.GetReplicaId()]);
+            .Invoke([list, replicaId, version, converterArguments.Converter.GetReplicaId()]);
     }
 }

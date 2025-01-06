@@ -34,17 +34,22 @@ public class RdxDictionarySerializerAttribute : RdxSerializerAttribute
         return sb.ToString();
     }
 
-    public override object Deserialize(SimpleConverter converter, Type type, object obj)
+    public override object Deserialize(ConverterArguments converterArguments)
     {
-        if (obj is not ParserRdxPlex plex)
+        if (converterArguments.Value is not ParserRdxPlex plex)
         {
             throw new NotImplementedException("Object is not a plex");
         }
+
+        if (plex.PlexType is not PlexType.Eulerian)
+        {
+            throw new NotImplementedException("Object is not an Eulerian Plex");
+        }
         
-        var genericTypes = type.GetGenericArguments();
+        var genericTypes = converterArguments.Type.GetGenericArguments();
         var (replicaId, version) = ParsingHelper.ParseTimestamp(plex.Timestamp ?? throw new InvalidOperationException());
         var values = plex.Value
-            .Select(value => RdxSerializationHelper.ConvertToTuple(converter, typeof(ValueTuple<,>).MakeGenericType(genericTypes), value))
+            .Select(value => RdxSerializationHelper.ConvertToTuple(converterArguments.Converter, typeof(ValueTuple<,>).MakeGenericType(genericTypes), value))
             .ToArray();
 
         var dictionaryType = typeof(Dictionary<,>).MakeGenericType(genericTypes);
@@ -54,8 +59,8 @@ public class RdxDictionarySerializerAttribute : RdxSerializerAttribute
         {
             addMethod.Invoke(dictionary, [key, value]);
         }
-        return type
+        return converterArguments.Type
             .GetConstructor([typeof(IDictionary<,>).MakeGenericType(genericTypes), typeof(long), typeof(long), typeof(long)])!
-            .Invoke([dictionary, replicaId, version, converter.GetReplicaId()]);
+            .Invoke([dictionary, replicaId, version, converterArguments.Converter.GetReplicaId()]);
     }
 }

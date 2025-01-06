@@ -1,14 +1,19 @@
 ﻿using Rdx.Serialization.Parser;
 
-namespace Rdx.Serialization.RdxToObjectConverter.ValueParsers;
+namespace Rdx.Serialization.RdxToObjectConverter.DefaultConverters.Collections;
 
 public class ListConverter : DefaultConverterBase
 {
     public override Type TargetType { get; } = typeof(List<>);
 
-    public override object Convert(object value, ConverterArguments arguments)
+    public override string Serialize(RdxSerializer serializer, object obj)
     {
-        if (value is not ParserRdxPlex plex)
+        throw new NotImplementedException();
+    }
+
+    public override object Deserialize(ConverterArguments arguments)
+    {
+        if (arguments.Value is not ParserRdxPlex plex)
         {
             throw new NotImplementedException("Object is not a plex");
         }
