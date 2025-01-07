@@ -7,19 +7,17 @@ namespace RdxChat.Controllers;
 public class MainMenuController : Controller
 {
     private readonly IUserService _userService;
-    
+
     public MainMenuController(IUserService userService)
     {
         _userService = userService;
     }
-    
+
     [HttpGet("")]
     public async Task<IActionResult> Main()
     {
         if (!RequestContextFactory.TryBuild(ControllerContext.HttpContext.Request, out var requestContext))
-        {
             requestContext = await ProvideNewUser();
-        }
 
         try
         {
@@ -31,7 +29,7 @@ public class MainMenuController : Controller
             return View(recreatedRequestContext.GetUserId());
         }
     }
-    
+
     private async Task<RequestContext> ProvideNewUser()
     {
         var userId = await _userService.CreateUserAsync("Аноним");
@@ -49,7 +47,7 @@ public class MainMenuController : Controller
         var userId = Guid.Parse(Request.Cookies[RequestContextKeys.UserId] ?? throw new InvalidOperationException());
         await _userService.SetUserName(userId, name);
     }
-    
+
     [HttpGet("find-companion")]
     public async Task<bool> FindCompanion(Guid companionId)
     {

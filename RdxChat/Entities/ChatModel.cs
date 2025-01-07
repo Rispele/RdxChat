@@ -9,6 +9,6 @@ public class ChatModel
     public List<ChatMessage> Messages { get; set; } = [];
 
     public string UserName { get; set; }
-    
+
     public string CompanionName { get; set; }
 }

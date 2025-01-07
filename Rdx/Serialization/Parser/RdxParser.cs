@@ -13,10 +13,7 @@ public class RdxParser
 
     public object Parse(PlexType? outerPlexType = null)
     {
-        if (IsOutOfBracesTuple(outerPlexType))
-        {
-            return ParseOutOfBracesTuple();
-        }
+        if (IsOutOfBracesTuple(outerPlexType)) return ParseOutOfBracesTuple();
 
         return tokensReader.GetTokenType() == TokenType.OpeningBracket
             ? ParsePlex()
@@ -51,14 +48,11 @@ public class RdxParser
 
     private bool IsOutOfBracesTuple(PlexType? outerPlexType)
     {
-        if (outerPlexType == PlexType.XPles)
-        {
-            return false;
-        }
-        
+        if (outerPlexType == PlexType.XPles) return false;
+
         var nextTokenPosition = GetTokenNextToCurrentObject();
-        
-        return tokensReader.HasToken(nextTokenPosition) 
+
+        return tokensReader.HasToken(nextTokenPosition)
          && tokensReader.GetTokenType(nextTokenPosition) == TokenType.Colon;
     }
 
@@ -82,9 +76,7 @@ public class RdxParser
         }
 
         if (tokensReader.GetTokenType() != TokenType.Value)
-        {
             throw new InvalidOperationException("unexpected token type");
-        }
 
         return tokensReader.HasToken(1) && tokensReader.GetTokenType(1) == TokenType.TimestampMarker
             ? 3
@@ -99,10 +91,7 @@ public class RdxParser
         while (true)
         {
             result.Add(Parse(plexType));
-            if (tokensReader.GetTokenType() != TokenType.Colon)
-            {
-                return new ParserRdxPlex(plexType, result, null);
-            }
+            if (tokensReader.GetTokenType() != TokenType.Colon) return new ParserRdxPlex(plexType, result, null);
             tokensReader.MoveNext();
         }
     }

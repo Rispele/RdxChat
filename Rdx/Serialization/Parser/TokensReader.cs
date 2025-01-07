@@ -39,8 +39,8 @@ public class TokensReader : IDisposable
     {
         return offset == 0
             ? value.Value
-            : GetToken(position + offset)?.GetValue(source) 
-              ?? throw new InvalidOperationException("Unable to read tokens.");
+            : GetToken(position + offset)?.GetValue(source)
+         ?? throw new InvalidOperationException("Unable to read tokens.");
     }
 
     public string GetValueAndMoveNext()
@@ -60,10 +60,7 @@ public class TokensReader : IDisposable
     {
         while (tokenPosition >= tokens.Count)
         {
-            if (!tokenSource.MoveNext())
-            {
-                return null;
-            }
+            if (!tokenSource.MoveNext()) return null;
 
             tokens.Add(tokenSource.Current);
         }

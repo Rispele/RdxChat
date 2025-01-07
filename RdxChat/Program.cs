@@ -31,7 +31,7 @@ app.UseAuthorization();
 app.MapRazorPages();
 app.MapHub<ChatHub>("/chatHub");
 app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=MainMenu}/{action=Main}");
+    "default",
+    "{controller=MainMenu}/{action=Main}");
 
 app.Run();

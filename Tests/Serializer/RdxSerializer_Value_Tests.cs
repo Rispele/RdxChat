@@ -26,7 +26,7 @@ public class RdxSerializer_Value_Tests
     {
         return serializer.Serialize(value);
     }
-    
+
     public static IEnumerable<TestCaseData> RdxValueTestCaseSource()
     {
         yield return new TestCaseData(new RdxValue<int>(1, 0, 0, 0)).Returns("1@0-0");

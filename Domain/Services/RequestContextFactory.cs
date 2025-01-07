@@ -31,10 +31,7 @@ public class RequestContextFactory
         requestContext.AddHeader(RequestContextKeys.UserId, userId.ToString());
 
         var sessionId = TryGetSessionId(request);
-        if (sessionId is not null)
-        {
-            requestContext.AddHeader(RequestContextKeys.SessionId, sessionId.ToString());
-        }
+        if (sessionId is not null) requestContext.AddHeader(RequestContextKeys.SessionId, sessionId.ToString());
 
         return requestContext;
     }

@@ -23,14 +23,14 @@ public class MessageService : IMessageService
         {
             var lines = File.ReadLines(chatCredentialsDto.SenderId.ToString());
             foreach (var line in lines)
-            {
                 try
                 {
                     var chatMessageDto = (ChatMessageDto)JsonSerializer.Deserialize(line, typeof(ChatMessageDto))!;
                     result.Add(chatMessageDto);
                 }
-                catch { }
-            }
+                catch
+                {
+                }
 
             return result;
         }

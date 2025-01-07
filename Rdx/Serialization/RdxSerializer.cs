@@ -50,8 +50,8 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
         var type = obj.GetType();
         if (TrySerializeWithDefaultConverters(type, obj, out var serialized)) return serialized!;
 
-        if (type.IsGenericType &&
-            TrySerializeWithDefaultConverters(type.GetGenericTypeDefinition(), obj, out serialized))
+        if (type.IsGenericType
+         && TrySerializeWithDefaultConverters(type.GetGenericTypeDefinition(), obj, out serialized))
             return serialized!;
 
         return SerializeCustomObject(obj);
@@ -121,8 +121,8 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
 
         if (TryDeserializeWithDefaultConverters(type, obj, out var converted, type)) return converted!;
 
-        if (type.IsGenericType &&
-            TryDeserializeWithDefaultConverters(type, obj, out converted, type.GetGenericTypeDefinition()))
+        if (type.IsGenericType
+         && TryDeserializeWithDefaultConverters(type, obj, out converted, type.GetGenericTypeDefinition()))
             return converted!;
 
         return ConvertToCustomObject(type, obj);
@@ -152,9 +152,10 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
         Dictionary<string, object> dict)
     {
         var instance = type.GetConstructor(
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-                [])?
-            .Invoke([]) ?? throw new MissingMethodException($"Could not find constructor for type {type}");
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+                    [])?
+                .Invoke([])
+         ?? throw new MissingMethodException($"Could not find constructor for type {type}");
 
         var properties = type.GetObjectProperties(knownTypes);
 

@@ -8,29 +8,29 @@ namespace RdxChat.Controllers;
 public class ChatController : Controller
 {
     private readonly IMessageService _messageService;
-    
+
     public ChatController(IMessageService messageService)
     {
         _messageService = messageService;
     }
-    
+
     [HttpGet("chat")]
     public async Task<IActionResult> Chat([FromQuery] Guid receiverId, [FromQuery] Guid senderId)
     {
         var chatMessageDtos = await _messageService.GetChatMessages(new ChatCredentialsDto
         {
             ReceiverId = receiverId,
-            SenderId = senderId,
+            SenderId = senderId
         });
-        var chatMessages = chatMessageDtos.Select(x => new ChatMessage()
+        var chatMessages = chatMessageDtos.Select(x => new ChatMessage
         {
             Message = x.Message,
             SendingTime = x.SendingTime,
             UserId = x.SenderId,
             UserName = "UserName"
         }).ToList();
-        
-        return View(new ChatModel()
+
+        return View(new ChatModel
         {
             CompanionId = receiverId,
             UserId = senderId,
@@ -52,7 +52,7 @@ public class ChatController : Controller
         }, sendMessageModel.SavePath);
         return messageId;
     }
-    
+
     public class SendMessageModel
     {
         public string Message { get; set; }
