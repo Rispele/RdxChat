@@ -27,14 +27,20 @@ public class TokensReader : IDisposable
 
     public TokenType GetTokenType(int offset = 0)
     {
-        return GetToken(position + offset).TokenType;
+        return GetToken(position + offset)?.TokenType ?? throw new InvalidOperationException("Unable to read tokens.");
+    }
+
+    public bool HasToken(int offset = 0)
+    {
+        return GetToken(position + offset) != null;
     }
 
     public string GetValue(int offset = 0)
     {
         return offset == 0
             ? value.Value
-            : GetToken(position + offset).GetValue(source);
+            : GetToken(position + offset)?.GetValue(source) 
+              ?? throw new InvalidOperationException("Unable to read tokens.");
     }
 
     public string GetValueAndMoveNext()
@@ -50,11 +56,14 @@ public class TokensReader : IDisposable
         RecreateLazy();
     }
 
-    private RdxToken GetToken(int tokenPosition)
+    private RdxToken? GetToken(int tokenPosition)
     {
         while (tokenPosition >= tokens.Count)
         {
-            if (!tokenSource.MoveNext()) throw new InvalidOperationException("Unable to read tokens.");
+            if (!tokenSource.MoveNext())
+            {
+                return null;
+            }
 
             tokens.Add(tokenSource.Current);
         }

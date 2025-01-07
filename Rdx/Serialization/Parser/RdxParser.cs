@@ -11,26 +11,29 @@ public class RdxParser
         this.tokensReader = tokensReader;
     }
 
-    public object Parse()
+    public object Parse(PlexType? outerPlexType = null)
     {
+        if (IsOutOfBracesTuple(outerPlexType))
+        {
+            return ParseOutOfBracesTuple();
+        }
+
         return tokensReader.GetTokenType() == TokenType.OpeningBracket
             ? ParsePlex()
             : ParseValue();
     }
 
-    private object ParsePlex()
+    private ParserRdxPlex ParsePlex()
     {
         var result = new List<object>();
-        var bracketType = tokensReader.GetValueAndMoveNext();
-        var timestamp = ParseTimestamp();
+        var braceType = tokensReader.GetValueAndMoveNext();
+        var timestamp = ParseTimestampIfExists();
 
-        var closingBracketType = GetClosingBracket(bracketType);
+        var closingBracketType = ResolveClosingBracket(braceType);
+        var plexType = ResolvePlexType(braceType);
         while (true)
         {
-            var rdxValue = tokensReader.GetTokenType() == TokenType.OpeningBracket
-                ? ParsePlex()
-                : ParseValue();
-            result.Add(rdxValue);
+            result.Add(Parse(plexType));
 
             if (tokensReader.GetTokenType() != TokenType.ClosingBracket)
             {
@@ -42,22 +45,80 @@ public class RdxParser
                 throw new InvalidOperationException("closing bracket mismatch");
 
             tokensReader.MoveNext();
-            return new ParserRdxPlex(GetPlexType(bracketType), result, timestamp);
+            return new ParserRdxPlex(plexType, result, timestamp);
         }
     }
 
-    private static string GetClosingBracket(string bracketType)
+    private bool IsOutOfBracesTuple(PlexType? outerPlexType)
+    {
+        if (outerPlexType == PlexType.XPles)
+        {
+            return false;
+        }
+        
+        var nextTokenPosition = GetTokenNextToCurrentObject();
+        
+        return tokensReader.HasToken(nextTokenPosition) 
+         && tokensReader.GetTokenType(nextTokenPosition) == TokenType.Colon;
+    }
+
+    private int GetTokenNextToCurrentObject()
+    {
+        if (tokensReader.GetTokenType() == TokenType.OpeningBracket)
+        {
+            var offset = 1;
+            for (var bracesCount = 1; bracesCount > 0; offset++)
+            {
+                var tokenType = tokensReader.GetTokenType(offset);
+                bracesCount += tokenType switch
+                {
+                    TokenType.OpeningBracket => 1,
+                    TokenType.ClosingBracket => -1,
+                    _ => 0
+                };
+            }
+
+            return offset + 1;
+        }
+
+        if (tokensReader.GetTokenType() != TokenType.Value)
+        {
+            throw new InvalidOperationException("unexpected token type");
+        }
+
+        return tokensReader.HasToken(1) && tokensReader.GetTokenType(1) == TokenType.TimestampMarker
+            ? 3
+            : 1;
+    }
+
+    private ParserRdxPlex ParseOutOfBracesTuple()
+    {
+        const PlexType plexType = PlexType.XPles;
+
+        var result = new List<object>();
+        while (true)
+        {
+            result.Add(Parse(plexType));
+            if (tokensReader.GetTokenType() != TokenType.Colon)
+            {
+                return new ParserRdxPlex(plexType, result, null);
+            }
+            tokensReader.MoveNext();
+        }
+    }
+
+    private static string ResolveClosingBracket(string bracketType)
     {
         return bracketType switch
         {
             "{" => "}",
             "[" => "]",
             "<" => ">",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(bracketType))
         };
     }
 
-    private static PlexType GetPlexType(string bracketType)
+    private static PlexType ResolvePlexType(string bracketType)
     {
         return bracketType switch
         {
@@ -68,12 +129,12 @@ public class RdxParser
         };
     }
 
-    private object ParseValue()
+    private ParserRdxValue ParseValue()
     {
-        return new ParserRdxValue(tokensReader.GetValueAndMoveNext(), ParseTimestamp());
+        return new ParserRdxValue(tokensReader.GetValueAndMoveNext(), ParseTimestampIfExists());
     }
 
-    private string? ParseTimestamp()
+    private string? ParseTimestampIfExists()
     {
         if (tokensReader.GetTokenType() != TokenType.TimestampMarker) return null;
 

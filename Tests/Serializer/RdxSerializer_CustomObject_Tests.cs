@@ -14,10 +14,6 @@ public class RdxSerializer_CustomObject_Tests
 {
     private readonly RdxSerializer serializer = new(replicaIdProvider: new ConstIdProvider(id: 123));
 
-    // private readonly string jRdx = ClearJRdxRegex().Replace(jRdx.Trim(), " ");
-    //
-    
-
     [TestCaseSource(nameof(TestCaseSource))]
     public void Serialize_Then_Deserialize_ShouldEquals(TestObjectOuter testObject)
     {
@@ -34,12 +30,16 @@ public class RdxSerializer_CustomObject_Tests
         deserialized.Inner.NotSerializable.Should().BeNull();
     }
 
-    [Test]
-    public void Deserialize_ShouldNotThrow()
+    [TestCase("{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@1-2>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":0>}>}")]
+    public void Deserialize_ShouldNotThrow1(string jdr)
     {
-        var s =
-            "{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@1-2>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":0>}>}";
-        var action = () => serializer.Deserialize<TestObjectOuter>(jRdx: s);
+        var action = () => serializer.Deserialize<TestObjectOuter>(jdr);
+        action.Should().NotThrow();
+    }
+    [TestCase("{\"key\":\"value\", \"key2\":\"value2\"}")]
+    public void Deserialize_ShouldNotThrow(string jdr)
+    {
+        var action = () => serializer.Deserialize<Dictionary<string, string>>(jdr);
         action.Should().NotThrow();
     }
 
@@ -63,7 +63,7 @@ public class RdxSerializer_CustomObject_Tests
         serializer.Serialize(obj: obj).Should()
             .Be(
                 expected:
-                "{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@1-2>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":1>}>}");
+                "{\"Inner\":{\"bool\":True, \"IntegerValue\":123, \"RdxString\":\"string\"@1-2}, \"abc\":\"abc\", \"RdxObj\":{@0-0 \"Value\":1}}");
     }
 
     public static IEnumerable<TestObjectOuter> TestCaseSource()

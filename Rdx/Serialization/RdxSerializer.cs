@@ -91,7 +91,7 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
 
             if (value is null) continue;
 
-            yield return $"<\"{name}\":{Serialize(value)}>";
+            yield return $"\"{name}\":{Serialize(value)}";
         }
     }
 
