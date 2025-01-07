@@ -33,7 +33,7 @@ public class RdxBuffer : IDisposable
         var serializedEnd = serializedBegin + rdxObject.Length;
 
         var tlvBegin = FreeBufferSlice.From;
-        RdxExportedFunctions.RDXJdrainExport(FreeBufferSlice.Borders, [serializedBegin, serializedEnd]);
+        RdxExportedFunctions.FromJDR(FreeBufferSlice.Borders, [serializedBegin, serializedEnd]);
 
         Marshal.FreeHGlobal(serializedBegin);
 
@@ -47,7 +47,7 @@ public class RdxBuffer : IDisposable
         var serializedEnd = serializedBegin + serialized.Length;
 
         var tlvBegin = FreeBufferSlice.From;
-        RdxExportedFunctions.RDXJdrainExport(FreeBufferSlice.Borders, [serializedBegin, serializedEnd]);
+        RdxExportedFunctions.FromJDR(FreeBufferSlice.Borders, [serializedBegin, serializedEnd]);
 
         Marshal.FreeHGlobal(serializedBegin);
 
@@ -64,7 +64,7 @@ public class RdxBuffer : IDisposable
         using var sliceOfSlices = RdxSlice.Create(slices);
 
         var beginOfMerged = FreeBufferSlice.From;
-        RdxExportedFunctions.RDXYExport(FreeBufferSlice.Borders, sliceOfSlices.Borders);
+        RdxExportedFunctions.MergeRDX(FreeBufferSlice.Borders, sliceOfSlices.Borders);
         var endOfMerged = FreeBufferSlice.From;
 
         return new RdxBufferSlice(beginOfMerged, endOfMerged);
@@ -73,7 +73,7 @@ public class RdxBuffer : IDisposable
     public string ExtractObject(RdxBufferSlice bufferSlice)
     {
         var beginExtracted = FreeBufferSlice.From;
-        RdxExportedFunctions.RDXJfeedExport(FreeBufferSlice.Borders, bufferSlice.Borders);
+        RdxExportedFunctions.ToJDR(FreeBufferSlice.Borders, bufferSlice.Borders);
         var endOfExtracted = FreeBufferSlice.From;
 
         return Marshal.PtrToStringAnsi(beginExtracted, (int)(endOfExtracted - beginExtracted));
