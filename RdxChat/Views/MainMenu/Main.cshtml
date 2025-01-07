@@ -1,0 +1,91 @@
+﻿@model Guid
+
+<link rel="stylesheet" href="~/css/main.css" asp-append-version="true"/>
+
+<div class="modal__background">
+    <div class="modal__window">
+
+        <form class="auth-form" name="form-auth" method="post">
+
+            <label class="auth-form__label">
+                <span class="auth-form__placeholder">Ваше имя</span>
+                <input class="auth-form__input input-email" type="text" name="email" autocomplete="off" required>
+            </label>
+
+            <label class="auth-form__label">
+                <span class="auth-form__placeholder">Код собеседника</span>
+                <input class="auth-form__input input-password" type="text" name="password" autocomlete="off" required>
+                <div class="auth-form__toggler">
+                    <i class="la la-eye auth-form__icon"></i>
+                    <input type="checkbox" class="auth-form__checkbox password-toggler">
+                </div>
+            </label>
+
+            <div class="auth-form__answer"></div>
+
+            <button class="auth-form__submit" type="button">Начать общение</button>
+
+            
+        </form>
+
+    </div>
+</div>
+
+<div class="hint"></div>
+
+<script type="module">
+    window.onload = function() {
+        
+        const inputText = document.querySelectorAll('.auth-form__input');
+
+        inputText.forEach( function(input) {
+            input.addEventListener('focus', function() {
+                this.classList.add('focus');
+                this.parentElement.querySelector('.auth-form__placeholder').classList.add('focus');
+            });
+            input.addEventListener('blur', function() {
+                this.classList.remove('focus');
+                if (! this.value) {
+                    this.parentElement.querySelector('.auth-form__placeholder').classList.remove('focus');
+                }
+            });
+        });
+        
+        const togglers = document.querySelectorAll('.password-toggler');
+
+        togglers.forEach( function(checkbox) {
+            checkbox.addEventListener('change', function() {
+
+                const toggler = this.parentElement,
+                    input   = toggler.parentElement.querySelector('.input-password'),
+                    icon    = toggler.querySelector('.auth-form__icon');
+
+                if (checkbox.checked) {
+                    input.type = 'text';
+                    icon.classList.remove('la-eye')
+                    icon.classList.add('la-eye-slash');
+                }
+
+                else
+                {
+                    input.type = 'password';
+                    icon.classList.remove('la-eye-slash')
+                    icon.classList.add('la-eye');
+                }
+            });
+        });
+
+        document.getElementsByClassName('auth-form__submit')[0].addEventListener('click', async () => {
+            const name = document.getElementsByClassName('input-email')[0].value;
+            const id = document.getElementsByClassName('input-password')[0].value;
+
+            if (true) {
+                const result = await (await fetch(`/main/find-companion?companionId=${id}`)).text();
+                if (result === 'true') {
+                    window.location.href = `/chat?receiverId=${id}&senderId=@Model`;
+                }
+            }
+        
+        });
+    };
+</script>
