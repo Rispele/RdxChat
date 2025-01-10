@@ -22,6 +22,8 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
         new IntConverter(),
         new LongConverter(),
         new StringConverter(),
+        new GuidConverter(),
+        
         new ListConverter(),
         new HashSetConverter(),
         new DictionaryConverter()

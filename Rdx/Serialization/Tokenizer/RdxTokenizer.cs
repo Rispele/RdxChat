@@ -10,12 +10,21 @@ public class RdxTokenizer(string jRdx)
 
     public IEnumerable<RdxToken> Tokenize()
     {
-        while (endOfLastToken < jRdx.Length)
+        var inString = false;
+        for (;endOfLastToken < jRdx.Length; endOfLastToken++)
         {
             var symbol = jRdx[endOfLastToken];
+            if (symbol == '\"')
+            {
+                inString = !inString;
+                continue;
+            }
+            if (inString)
+            {
+                continue;
+            }
+            
             foreach (var token in HandleSymbol(symbol)) yield return token;
-
-            endOfLastToken++;
         }
     }
 

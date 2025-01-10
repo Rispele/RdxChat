@@ -1,11 +1,20 @@
-﻿namespace Domain.Dtos;
+﻿using JetBrains.Annotations;
+using Rdx.Serialization.Attributes.Markup;
+
+namespace Domain.Dtos;
 
 public class ChatMessageDto
 {
-    public Guid MessageId { get; set; }
-    public string Message { get; set; }
-    public DateTime SendingTime { get; set; }
-    public Guid SenderId { get; set; }
-    public string SenderName { get; set; }
-    public Guid ReceiverId { get; set; }
+    [RdxProperty]
+    public Guid MessageId { get; [UsedImplicitly] set; }
+    [RdxProperty]
+    public string Message { get; [UsedImplicitly] set; }
+    [RdxProperty]
+    public DateTime SendingTime { get; [UsedImplicitly] set; }
+    [RdxProperty]
+    public Guid SenderId { get; [UsedImplicitly] set; }
+    [RdxProperty]
+    public string SenderName { get; [UsedImplicitly] set; }
+    [RdxProperty]
+    public Guid ReceiverId { get; [UsedImplicitly] set; }
 }

@@ -1,4 +1,6 @@
 using Domain.Services;
+using Rdx.Serialization;
+using RdxChat;
 using RdxChat.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +13,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<RdxSerializer>(_ => new RdxSerializer(new UserIdReplicaIdProvider()));
 
 var app = builder.Build();
 

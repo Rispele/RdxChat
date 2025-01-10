@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Text.Json;
+using NUnit.Framework;
 using Rdx.Objects;
 using Rdx.Primitives;
 using Rdx.Serialization;
@@ -8,6 +9,16 @@ namespace Tests;
 
 internal static class Program
 {
+    [Test]
+    public static void m()
+    {
+        Console.WriteLine(JsonSerializer.Serialize("\"abc\""));
+        Console.WriteLine(JsonSerializer.Deserialize<string>(JsonSerializer.Serialize("\"abc\"")));
+        Console.WriteLine(JsonSerializer.Deserialize<string>("\u0022abc\u0022"));
+        Console.WriteLine("\u0022abc\u0022");
+        File.WriteAllText("123.txt", JsonSerializer.Serialize("\"abc\""));
+    }
+    
     [Test]
     public static void Test1()
     {

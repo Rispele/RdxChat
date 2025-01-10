@@ -3,15 +3,15 @@ using Rdx.Serialization.Parser;
 
 namespace Rdx.Serialization.DefaultConverters.Values;
 
-public class DateTimeConverter : IDefaultConverter
+public class GuidConverter : IDefaultConverter
 {
-    public Type TargetType { get; } = typeof(DateTime);
-
+    public Type TargetType { get; } = typeof(Guid);
     public string Serialize(RdxSerializer serializer, object obj)
     {
-        if (obj is not DateTime dateTime) throw new InvalidCastException();
-
-        return $"\"{dateTime.ToString(CultureInfo.InvariantCulture)}\"";
+        if (obj is not Guid guid)
+            throw new InvalidCastException();
+        
+        return $"\"{guid}\"";
     }
 
     public object Deserialize(SerializationArguments arguments)
@@ -19,6 +19,6 @@ public class DateTimeConverter : IDefaultConverter
         if (arguments.Value is not ParserRdxValue parserRdxValue)
             throw new NotImplementedException("Object is not a ParserRdxValue");
 
-        return DateTime.Parse(parserRdxValue.Value.Trim('\"'), CultureInfo.InvariantCulture);
+        return Guid.Parse(parserRdxValue.Value.Trim('\"'), CultureInfo.InvariantCulture);
     }
 }

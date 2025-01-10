@@ -96,11 +96,11 @@ public class RdxSerializer_CustomObject_Tests
 
     public class TestObjectOuter
     {
-        [RdxProperty] public TestObjectInner Inner { get; set; }
+        [RdxProperty] public TestObjectInner Inner { get; [UsedImplicitly] set; }
 
-        [RdxProperty] public string abc { get; set; }
+        [RdxProperty] public string abc { get; [UsedImplicitly] set; }
 
-        [RdxProperty] public TestRdxObject RdxObj { get; set; }
+        [RdxProperty] public TestRdxObject RdxObj { get; [UsedImplicitly] set; }
     }
 
     public class TestRdxObject : RdxObject
@@ -109,7 +109,7 @@ public class RdxSerializer_CustomObject_Tests
         {
         }
 
-        [RdxProperty] public int Value { get; set; }
+        [RdxProperty] public int Value { get; [UsedImplicitly] set; }
     }
 
     public class TestObjectInner
@@ -128,10 +128,10 @@ public class RdxSerializer_CustomObject_Tests
             NotSerializable = notSerializableValue;
         }
 
-        [RdxProperty("bool")] private bool BooleanValue { get; }
-        [RdxProperty] private int IntegerValue { get; }
-        [RdxProperty] private RdxValue<string> RdxString { get; }
-        public RdxValue<string> NotSerializable { get; set; }
+        [RdxProperty("bool")] private bool BooleanValue { get; [UsedImplicitly] set; }
+        [RdxProperty] private int IntegerValue { get; [UsedImplicitly] set; }
+        [RdxProperty] private RdxValue<string> RdxString { get; [UsedImplicitly] set; }
+        public RdxValue<string> NotSerializable { get; [UsedImplicitly] set; }
 
         public bool TestEquals(TestObjectInner other)
         {

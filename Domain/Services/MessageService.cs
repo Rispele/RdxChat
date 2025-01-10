@@ -1,16 +1,23 @@
-﻿using System.Text.Json;
-using Domain.Dtos;
+﻿using Domain.Dtos;
+using Rdx.Serialization;
 
 namespace Domain.Services;
 
 public class MessageService : IMessageService
 {
+    private readonly RdxSerializer rdxSerializer;
+
+    public MessageService(RdxSerializer rdxSerializer)
+    {
+        this.rdxSerializer = rdxSerializer;
+    }
+
     public async Task<Guid> SaveMessageAsync(ChatMessageDto chatMessageDto, string path)
     {
         chatMessageDto.MessageId = Guid.NewGuid();
         using (var w = File.AppendText(path))
         {
-            await w.WriteLineAsync(JsonSerializer.Serialize(chatMessageDto));
+            await w.WriteLineAsync(rdxSerializer.Serialize(chatMessageDto));
         }
 
         return chatMessageDto.MessageId;
@@ -19,24 +26,13 @@ public class MessageService : IMessageService
     public async Task<List<ChatMessageDto>> GetChatMessages(ChatCredentialsDto chatCredentialsDto)
     {
         var result = new List<ChatMessageDto>();
-        try
+        var lines = File.ReadLines(chatCredentialsDto.SenderId.ToString());
+        foreach (var line in lines)
         {
-            var lines = File.ReadLines(chatCredentialsDto.SenderId.ToString());
-            foreach (var line in lines)
-                try
-                {
-                    var chatMessageDto = (ChatMessageDto)JsonSerializer.Deserialize(line, typeof(ChatMessageDto))!;
-                    result.Add(chatMessageDto);
-                }
-                catch
-                {
-                }
+            var chatMessageDto = rdxSerializer.Deserialize<ChatMessageDto>(line);
+            result.Add(chatMessageDto);
+        }
 
-            return result;
-        }
-        catch (Exception e)
-        {
-            return result;
-        }
+        return result;
     }
 }
