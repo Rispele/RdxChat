@@ -31,16 +31,11 @@ public class RdxSerializer_CustomObject_Tests
         deserialized.Inner.NotSerializable.Should().BeNull();
     }
 
-    [TestCase(
-        "{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@1-2>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":0>}>}")]
-    public void Deserialize_ShouldNotThrow1(string jdr)
-    {
-        var action = () => serializer.Deserialize<TestObjectOuter>(jdr);
-        action.Should().NotThrow();
-    }
-
     [TestCase(typeof(Dictionary<string, string>), "{\"key\":\"value\", \"key2\":\"value2\"}")]
-    [TestCase(typeof(ChatMessageDto), "{\"MessageType\":\"ChatMessage\", \"Message\":\"sdfg\", \"SenderId\":\"d503691f-fc05-4f30-9525-8a4a69b50603\", \"SenderName\":\"UserName\", \"ReceiverId\":\"abe939e3-b2c1-42f7-8ca3-f359e26d0451\", \"MessageId\":\"262dd286-ae66-4a9b-b5c0-79b816bb6299\", \"SendingTime\":\"01/14/2025 22:33:55\"}")]
+    [TestCase(typeof(ChatMessageDto),
+        "{\"MessageType\":\"ChatMessage\", \"Message\":\"sdfg\", \"SenderId\":\"d503691f-fc05-4f30-9525-8a4a69b50603\", \"SenderName\":\"UserName\", \"ReceiverId\":\"abe939e3-b2c1-42f7-8ca3-f359e26d0451\", \"MessageId\":\"262dd286-ae66-4a9b-b5c0-79b816bb6299\", \"SendingTime\":\"01/14/2025 22:33:55\"}")]
+    [TestCase(typeof(TestObjectOuter),
+        "{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@1-2>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":0>}>}")]
     public void Deserialize_ShouldNotThrow(Type type, string jdr)
     {
         var action = () => serializer.Deserialize(type, jdr);
@@ -58,17 +53,20 @@ public class RdxSerializer_CustomObject_Tests
                 123,
                 new RdxValue<string>("string", 1, 2, 0),
                 new RdxValue<string>("not_serializable", 3, 4,
-                    0)),
+                    0),
+                null),
             RdxObj = new TestRdxObject
             {
                 Value = 1
             }
         };
-        serializer.Serialize(obj).Should()
+        var serialized = serializer.Serialize(obj);
+        serialized
+            .Should()
             .Be(
                 "{\"Inner\":{\"bool\":True, \"IntegerValue\":123, \"RdxString\":\"string\"@1-2}, \"abc\":\"abc\", \"RdxObj\":{@0-0 \"Value\":1}}");
     }
-    
+
     public static IEnumerable<TestObjectOuter> TestCaseSource()
     {
         var random = new Random();
@@ -88,7 +86,8 @@ public class RdxSerializer_CustomObject_Tests
                         "not_serializable",
                         3,
                         4,
-                        0)),
+                        0),
+                    random.Next(2) == 0 ? Guid.NewGuid() : null),
                 RdxObj = new TestRdxObject
                 {
                     Value = random.Next(10)
@@ -121,18 +120,24 @@ public class RdxSerializer_CustomObject_Tests
         {
         }
 
-        public TestObjectInner(bool boolValue, int integer, RdxValue<string> rdxString,
-            RdxValue<string> notSerializableValue)
+        public TestObjectInner(
+            bool boolValue,
+            int integer,
+            RdxValue<string> rdxString,
+            RdxValue<string> notSerializableValue,
+            Guid? guid)
         {
             BooleanValue = boolValue;
             IntegerValue = integer;
             RdxString = rdxString;
             NotSerializable = notSerializableValue;
+            Guid = guid;
         }
 
         [RdxProperty("bool")] private bool BooleanValue { get; [UsedImplicitly] set; }
         [RdxProperty] private int IntegerValue { get; [UsedImplicitly] set; }
         [RdxProperty] private RdxValue<string> RdxString { get; [UsedImplicitly] set; }
+        [RdxProperty] private Guid? Guid { get; [UsedImplicitly] set; }
         public RdxValue<string> NotSerializable { get; [UsedImplicitly] set; }
 
         public bool TestEquals(TestObjectInner other)
@@ -141,7 +146,8 @@ public class RdxSerializer_CustomObject_Tests
              && IntegerValue == other.IntegerValue
              && RdxString.Value == other.RdxString.Value
              && RdxString.Version == other.RdxString.Version
-             && RdxString.ReplicaId == other.RdxString.ReplicaId;
+             && RdxString.ReplicaId == other.RdxString.ReplicaId
+             && Guid == other.Guid;
         }
     }
 }
