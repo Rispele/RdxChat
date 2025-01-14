@@ -4,4 +4,5 @@ public class ChatCredentialsDto
 {
     public Guid ReceiverId { get; set; }
     public Guid SenderId { get; set; }
+    public Guid RequestSentToId { get; set; }
 }

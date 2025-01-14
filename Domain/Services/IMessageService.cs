@@ -4,7 +4,9 @@ namespace Domain.Services;
 
 public interface IMessageService
 {
-    Task<Guid> SaveMessageAsync(ChatMessageDto chatMessageDto, string path);
+    Task<Guid> SaveMessageAsync(AbstractMessageDto abstractMessageDto, string path);
 
-    Task<List<ChatMessageDto>> GetChatMessages(ChatCredentialsDto chatCredentialsDto);
+    Task<List<AbstractMessageDto>> GetChatMessages(ChatCredentialsDto chatCredentialsDto);
+
+    Task<(Guid[], object[])> SynchronizeHistory(ChatCredentialsDto chatCredentialsDto, List<Guid> messageIds);
 }

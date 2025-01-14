@@ -1,4 +1,5 @@
-﻿@model RdxChat.Entities.ChatModel
+﻿@using RdxChat.Entities
+@model RdxChat.Entities.ChatModel
 
 <link rel="stylesheet" href="css/chat.css">
 
@@ -20,7 +21,7 @@
                             <div class="message-data-name">@message.UserName</div>
                             <div class="message-data-time">@message.SendingTime.ToString("dd.MM.yy H:mm")</div>
                         </div>
-                        <div class="message other-message float-right">
+                        <div class="message other-message float-right" id="@message.MessageId">
                             @message.Message
                         </div>
                     </li>
@@ -32,7 +33,7 @@
                             <div class="message-data-name">@message.UserName</div>
                             <div class="message-data-time">@message.SendingTime.ToString("dd.MM.yy H:mm")</div>
                         </div>
-                        <div class="message my-message">
+                        <div class="message my-message" id="@message.MessageId">
                             @message.Message
                         </div>
                     </li>
@@ -52,8 +53,19 @@
 <script type="module">
     const connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
 
+    connection.on("NotifyPageReload", async function () {
+        window.location.reload();
+    });
+
     connection.on("NotifyMessage", async function (messageDto) {
+        alert(messageDto);
         const messageModel = JSON.parse(messageDto);
+
+        const existMessageBlock = document.getElementById(messageModel['MessageId']);
+        if (existMessageBlock !== undefined && existMessageBlock !== null) {
+            return;
+        }
+        
         const response = await fetch('/save-message', {
             method: 'POST',
             headers: {
@@ -62,6 +74,7 @@
             },
             body: JSON.stringify({
                 Message: messageModel['Message'],
+                MessageId: messageModel['MessageId'],
                 ReceiverId: messageModel['ReceiverId'],
                 SenderId: messageModel['SenderId'],
                 SavePath: messageModel['ReceiverId']
@@ -80,6 +93,7 @@
         messageDataTime.innerText = `${time.substring(0, 6)}${time.substring(8, 10)} ${time.substring(12, 17)}`;
         const messageBlock = document.createElement("div");
         messageBlock.className = "message my-message";
+        messageBlock.id = messageModel['MessageId']
         messageBlock.innerText = messageModel['Message'];
 
         messageData.appendChild(messageDataName);
@@ -100,6 +114,24 @@
         if (message.length === 0) {
             return;
         }
+
+        const request = {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                MessageType: `@MessageTypeMap.ChatMessage`,
+                Message: message,
+                ReceiverId: '@Model.CompanionId',
+                SenderId: '@Model.UserId',
+                SavePath:'@Model.UserId',
+            })
+        };
+        const response = await fetch('/save-message', request);
+        const json = await response.json();
+        request.body = json;
         
         const li = document.createElement("li");
         li.className = "clearfix";
@@ -114,6 +146,7 @@
         messageDataTime.innerText = `${time.substring(0, 6)}${time.substring(8, 10)} ${time.substring(12, 17)}`;
         const messageBlock = document.createElement("div");
         messageBlock.className = "message other-message float-right";
+        messageBlock.id = JSON.parse(json)["MessageId"];
         messageBlock.innerText = message;
         
         messageData.appendChild(messageDataName);
@@ -124,22 +157,10 @@
         const history = document.getElementsByClassName("chat-history")[0];
         history.scrollTo(0, history.scrollHeight);
 
-        const response = await fetch('/save-message', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                Message: message,
-                ReceiverId: '@Model.CompanionId',
-                SenderId: '@Model.UserId',
-                SavePath:'@Model.UserId'
-            })
-        });
-        await connection.invoke("SendMessage", message, '@Model.CompanionId', '@Model.UserId');
-
         document.getElementById("message-to-send").value = "";
+
+        await fetch('/send-message', request);
     });
     
+
 </script>

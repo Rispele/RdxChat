@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <PackageReference Include="Breakdance.AspNetCore.SignalR" Version="6.0.0"/>
+        <PackageReference Include="Fleck" Version="1.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0"/>
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="8.0.0"/>
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="8.0.0"/>

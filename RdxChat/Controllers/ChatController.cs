@@ -1,17 +1,22 @@
-﻿using Domain.Dtos;
+﻿using System.Text.Json;
+using Domain.Dtos;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
+using RdxChat.Converters;
 using RdxChat.Entities;
+using RdxChat.WebSocket;
 
 namespace RdxChat.Controllers;
 
 public class ChatController : Controller
 {
     private readonly IMessageService _messageService;
+    private readonly IWebSocketHandler _webSocketHandler;
 
-    public ChatController(IMessageService messageService)
+    public ChatController(IMessageService messageService, IWebSocketHandler webSocketHandler)
     {
         _messageService = messageService;
+        _webSocketHandler = webSocketHandler;
     }
 
     [HttpGet("chat")]
@@ -20,16 +25,14 @@ public class ChatController : Controller
         var chatMessageDtos = await _messageService.GetChatMessages(new ChatCredentialsDto
         {
             ReceiverId = receiverId,
-            SenderId = senderId
+            SenderId = senderId,
+            RequestSentToId = senderId
         });
-        var chatMessages = chatMessageDtos.Select(x => new ChatMessage
-        {
-            Message = x.Message,
-            SendingTime = x.SendingTime,
-            UserId = x.SenderId,
-            UserName = "UserName"
-        }).ToList();
-
+        var chatMessages = chatMessageDtos
+            .Where(x => x is ChatMessageDto)
+            .Select(x => MessageDtoConverter.Convert((ChatMessageDto)x))
+            .ToList();
+        
         return View(new ChatModel
         {
             CompanionId = receiverId,
@@ -41,21 +44,33 @@ public class ChatController : Controller
     }
 
     [HttpPost("save-message")]
-    public async Task<Guid> SaveMessage([FromBody] SendMessageModel sendMessageModel)
+    public async Task<string> SaveMessage([FromBody] SendMessageModel sendMessageModel)
     {
-        var messageId = await _messageService.SaveMessageAsync(new ChatMessageDto
+        var chatMessageDto = new ChatMessageDto
         {
             Message = sendMessageModel.Message,
+            MessageId = sendMessageModel.MessageId,
             ReceiverId = sendMessageModel.ReceiverId,
             SenderId = sendMessageModel.SenderId,
+            SenderName = "UserName",
             SendingTime = DateTime.Now
-        }, sendMessageModel.SavePath);
-        return messageId;
+        };
+        var messageId = await _messageService.SaveMessageAsync(chatMessageDto, sendMessageModel.SavePath);
+        chatMessageDto.MessageId = messageId;
+        return JsonSerializer.Serialize(chatMessageDto);
+    }
+
+    [HttpPost("send-message")]
+    public async Task SendMessage([FromBody] ChatMessageDto chatMessageDto)
+    {
+        await _webSocketHandler.SendMessage(JsonSerializer.Serialize(chatMessageDto));
     }
 
     public class SendMessageModel
     {
+        public string MessageType { get; set; }
         public string Message { get; set; }
+        public Guid MessageId { get; set; }
         public Guid SenderId { get; set; }
         public Guid ReceiverId { get; set; }
         public string SavePath { get; set; }

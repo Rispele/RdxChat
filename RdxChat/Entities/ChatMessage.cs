@@ -1,10 +1,9 @@
 ﻿namespace RdxChat.Entities;
 
-public class ChatMessage
+public class ChatMessage : AbstractMessage
 {
+    public string MessageType { get; } = MessageTypeMap.ChatMessage;
     public string Message { get; set; } = null!;
-
-    public DateTime SendingTime { get; set; }
 
     public Guid UserId { get; set; }
 

@@ -1,16 +1,15 @@
 ﻿using JetBrains.Annotations;
 using Rdx.Serialization.Attributes.Markup;
+using RdxChat.Entities;
 
 namespace Domain.Dtos;
 
-public class ChatMessageDto
+public class ChatMessageDto : AbstractMessageDto
 {
     [RdxProperty]
-    public Guid MessageId { get; [UsedImplicitly] set; }
+    public string MessageType { get; [UsedImplicitly] set; } = MessageTypeForDtosMap.ChatMessage;
     [RdxProperty]
     public string Message { get; [UsedImplicitly] set; }
-    [RdxProperty]
-    public DateTime SendingTime { get; [UsedImplicitly] set; }
     [RdxProperty]
     public Guid SenderId { get; [UsedImplicitly] set; }
     [RdxProperty]

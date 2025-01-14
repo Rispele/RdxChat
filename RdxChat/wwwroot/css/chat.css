@@ -246,6 +246,8 @@ body {
             margin-bottom: 30px;
             width: 90%;
             position: relative;
+            text-wrap: wrap;
+            overflow-wrap: break-word;
 
             &:after {
                 bottom: 100%;
@@ -258,15 +260,18 @@ body {
                 border: 10px solid transparent;
                 border-bottom-color: #7d8ba1;
                 margin-left: -10px;
+                text-wrap: wrap;
             }
         }
 
         .my-message {
             background: #7d8ba1;
+            text-wrap: wrap;
         }
 
         .other-message {
             background: #1d4d99;
+            text-wrap: wrap;
 
             &:after {
                 border-bottom-color: #1d4d99;

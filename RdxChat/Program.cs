@@ -1,7 +1,9 @@
 using Domain.Services;
+using Microsoft.AspNetCore.SignalR;
 using Rdx.Serialization;
 using RdxChat;
 using RdxChat.Hubs;
+using RdxChat.WebSocket;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,7 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<RdxSerializer>(_ => new RdxSerializer(new UserIdReplicaIdProvider()));
+builder.Services.AddScoped<IWebSocketHandler, WebSocketHandler>();
 
 var app = builder.Build();
 
