@@ -9,7 +9,8 @@ public static class RdxValueSettings
         typeof(long),
         typeof(double),
         typeof(bool),
-        typeof(DateTime)
+        typeof(DateTime),
+        typeof(Guid)
     ];
 
     public static void EnsureTypeAllowedAsRdxValueType(this Type type)

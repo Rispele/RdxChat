@@ -4,7 +4,7 @@ using Rdx.Serialization.Attributes;
 namespace Rdx.Objects.ValueObjects;
 
 /// <inheritdoc />
-/// Possible values: string, int, long, double, bool, DateTime
+/// Possible values: string, int, long, double, bool, DateTime, Guid
 [RdxValueSerializer]
 public sealed class RdxValue<TValue> : RdxObject
     where TValue : notnull
