@@ -13,11 +13,15 @@ public class RdxParser
 
     public object Parse(PlexType? outerPlexType = null)
     {
-        if (IsOutOfBracesTuple(outerPlexType)) return ParseOutOfBracesTuple();
+        var tokenType = tokensReader.GetTokenType();
+        if (tokenType == TokenType.Value)
+        {
+            return IsOutOfBracesTuple(outerPlexType)
+                ? ParseOutOfBracesTuple()
+                : ParseValue();
+        }
 
-        return tokensReader.GetTokenType() == TokenType.OpeningBracket
-            ? ParsePlex()
-            : ParseValue();
+        return ParsePlex();
     }
 
     private ParserRdxPlex ParsePlex()
@@ -125,7 +129,7 @@ public class RdxParser
 
     private string? ParseTimestampIfExists()
     {
-        if (tokensReader.GetTokenType() != TokenType.TimestampMarker) return null;
+        if (!tokensReader.HasToken() || tokensReader.GetTokenType() != TokenType.TimestampMarker) return null;
 
         tokensReader.MoveNext();
         return tokensReader.GetValueAndMoveNext();

@@ -5,6 +5,7 @@ using Rdx.Objects;
 using Rdx.Objects.ValueObjects;
 using Rdx.Serialization;
 using Rdx.Serialization.Attributes.Markup;
+using Tests.Serializer.Classes.Case1;
 
 namespace Tests.Serializer;
 
@@ -38,10 +39,11 @@ public class RdxSerializer_CustomObject_Tests
         action.Should().NotThrow();
     }
 
-    [TestCase("{\"key\":\"value\", \"key2\":\"value2\"}")]
-    public void Deserialize_ShouldNotThrow(string jdr)
+    [TestCase(typeof(Dictionary<string, string>), "{\"key\":\"value\", \"key2\":\"value2\"}")]
+    [TestCase(typeof(ChatMessageDto), "{\"MessageType\":\"ChatMessage\", \"Message\":\"sdfg\", \"SenderId\":\"d503691f-fc05-4f30-9525-8a4a69b50603\", \"SenderName\":\"UserName\", \"ReceiverId\":\"abe939e3-b2c1-42f7-8ca3-f359e26d0451\", \"MessageId\":\"262dd286-ae66-4a9b-b5c0-79b816bb6299\", \"SendingTime\":\"01/14/2025 22:33:55\"}")]
+    public void Deserialize_ShouldNotThrow(Type type, string jdr)
     {
-        var action = () => serializer.Deserialize<Dictionary<string, string>>(jdr);
+        var action = () => serializer.Deserialize(type, jdr);
         action.Should().NotThrow();
     }
 
@@ -66,7 +68,7 @@ public class RdxSerializer_CustomObject_Tests
             .Be(
                 "{\"Inner\":{\"bool\":True, \"IntegerValue\":123, \"RdxString\":\"string\"@1-2}, \"abc\":\"abc\", \"RdxObj\":{@0-0 \"Value\":1}}");
     }
-
+    
     public static IEnumerable<TestObjectOuter> TestCaseSource()
     {
         var random = new Random();

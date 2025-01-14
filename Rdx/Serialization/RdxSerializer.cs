@@ -24,6 +24,8 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
         new StringConverter(),
         new GuidConverter(),
         
+        new NullableConverter(),
+        
         new ListConverter(),
         new HashSetConverter(),
         new DictionaryConverter()
@@ -110,7 +112,8 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
     {
         var cleared = ClearJRdxRegex().Replace(jRdx.Trim(), " ");
         var tokenSource = new RdxTokenizer(cleared).Tokenize();
-        var parser = new RdxParser(new TokensReader(tokenSource, cleared));
+        var t = tokenSource.ToArray();
+        var parser = new RdxParser(new TokensReader(t, cleared));
 
         var converted = ConvertToType(type, parser.Parse());
         return converted;

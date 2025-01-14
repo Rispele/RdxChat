@@ -5,6 +5,8 @@ namespace Rdx.Serialization.Tokenizer;
 
 public class RdxTokenizer(string jRdx)
 {
+    private const char EndOfFileCharacter = (char)0x1A;
+    
     private int beginOfLastToken;
     private int endOfLastToken;
 
@@ -26,6 +28,11 @@ public class RdxTokenizer(string jRdx)
             
             foreach (var token in HandleSymbol(symbol)) yield return token;
         }
+
+        if (beginOfLastToken != endOfLastToken)
+        {
+            foreach (var token in HandleSymbol(EndOfFileCharacter)) yield return token;
+        }
     }
 
     private IEnumerable<RdxToken> HandleSymbol(char symbol)
@@ -38,6 +45,7 @@ public class RdxTokenizer(string jRdx)
             ',' => AddValueTokenWithSpecialSymbol(RdxToken.Comma),
             '@' => AddValueTokenWithSpecialSymbol(RdxToken.TimestampMarker),
             ' ' => HandleSpace(),
+            EndOfFileCharacter => [AddValueToken()!],
             _ => []
         };
 
