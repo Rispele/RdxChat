@@ -10,4 +10,9 @@
       <ProjectReference Include="..\Rdx\Rdx.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.0" />
+      <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.1" />
+    </ItemGroup>
+
 </Project>
