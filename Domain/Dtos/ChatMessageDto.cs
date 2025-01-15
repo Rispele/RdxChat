@@ -7,7 +7,8 @@ namespace Domain.Dtos;
 public class ChatMessageDto : AbstractMessageDto
 {
     [RdxProperty]
-    public string MessageType { get; [UsedImplicitly] set; } = MessageTypeForDtosMap.ChatMessage;
+    public string MessageType { get; [UsedImplicitly] private set; } = MessageTypeForDtosMap.ChatMessage;
+    
     [RdxProperty]
     public string Message { get; [UsedImplicitly] set; }
     [RdxProperty]

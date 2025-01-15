@@ -1,14 +1,20 @@
 ﻿using Domain.Dtos;
+using JetBrains.Annotations;
+using Rdx.Serialization.Attributes.Markup;
 
 namespace RdxChat.Entities;
 
 public class SynchronizationMessageDto : AbstractMessageDto
 {
-    public string MessageType { get; } = MessageTypeForDtosMap.Synchronization;
+    [RdxProperty]
+    public string MessageType { get; [UsedImplicitly] private set; } = MessageTypeForDtosMap.Synchronization;
 
-    public Guid RequestSentToId { get; set; }
+    [RdxProperty]
+    public Guid RequestSentToId { get; [UsedImplicitly] set; }
     
-    public Guid RequestSentFromId { get; set; }
+    [RdxProperty]
+    public Guid RequestSentFromId { get; [UsedImplicitly] set; }
 
-    public List<Guid> MessageHistory { get; set; }
+    [RdxProperty]
+    public List<Guid> MessageHistory { get; [UsedImplicitly] set; }
 }

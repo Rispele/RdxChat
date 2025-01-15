@@ -7,17 +7,30 @@ public class RdxTokenizer(string jRdx)
 {
     private const char EndOfFileCharacter = (char)0x1A;
     
+    private readonly string jRdxY = jRdx.Trim();
     private int beginOfLastToken;
     private int endOfLastToken;
 
     public IEnumerable<RdxToken> Tokenize()
     {
         var inString = false;
+        var isPreviousSlash = false;
         for (;endOfLastToken < jRdx.Length; endOfLastToken++)
         {
             var symbol = jRdx[endOfLastToken];
+            if (symbol == '\\')
+            {
+                isPreviousSlash = true;
+                continue;
+            }
             if (symbol == '\"')
             {
+                if (isPreviousSlash)
+                {
+                    isPreviousSlash = false;
+                    continue;
+                }
+                
                 inString = !inString;
                 continue;
             }

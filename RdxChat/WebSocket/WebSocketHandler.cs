@@ -5,6 +5,7 @@ using Domain.Dtos;
 using Domain.Services;
 using Fleck;
 using Microsoft.AspNetCore.SignalR;
+using Rdx.Serialization;
 using RdxChat.Converters;
 using RdxChat.Entities;
 using RdxChat.Hubs;
@@ -17,11 +18,13 @@ public class WebSocketHandler : IWebSocketHandler
     public ClientWebSocket Client { get; } = new();
     private readonly IHubContext<ChatHub> _hubContext;
     private readonly IMessageService _messageService;
+    private readonly RdxSerializer rdxSerializer;
 
-    public WebSocketHandler(IHubContext<ChatHub> hubContext, IMessageService messageService)
+    public WebSocketHandler(IHubContext<ChatHub> hubContext, IMessageService messageService, RdxSerializer rdxSerializer)
     {
         _hubContext = hubContext;
         _messageService = messageService;
+        this.rdxSerializer = rdxSerializer;
     }
 
     public async Task ConnectAsync()
@@ -61,9 +64,9 @@ public class WebSocketHandler : IWebSocketHandler
                         synchronizationMessage.MessageHistory);
                 if (messageToSaveIds.Length != 0 || messagesToSend.Length != 0)
                 {
-                    await SendMessage(JsonSerializer.Serialize(new HistoryUpdateMessageDto
+                    await SendMessage(rdxSerializer.Serialize(new HistoryUpdateMessageDto
                     {
-                        MessagesToSave = messagesToSend.Select(x => JsonSerializer.Serialize(x)).ToList(),
+                        MessagesToSave = messagesToSend.Select(x => rdxSerializer.Serialize(x)).ToList(),
                         MessageToSendIds = messageToSaveIds.ToList(),
                         RequestSentFromId = synchronizationMessage.RequestSentToId,
                         RequestSentToId = synchronizationMessage.RequestSentFromId
@@ -92,9 +95,9 @@ public class WebSocketHandler : IWebSocketHandler
                 {
                     break;
                 }
-                await SendMessage(JsonSerializer.Serialize(new HistoryUpdateMessageDto
+                await SendMessage(rdxSerializer.Serialize(new HistoryUpdateMessageDto
                 {
-                    MessagesToSave = messagesToSendLocal.Select(x => JsonSerializer.Serialize(x)).ToList(),
+                    MessagesToSave = messagesToSendLocal.Select(x => rdxSerializer.Serialize(x)).ToList(),
                     MessageToSendIds = new List<Guid>(),
                     RequestSentFromId = historyUpdateMessage.RequestSentToId,
                     RequestSentToId = historyUpdateMessage.RequestSentFromId
@@ -123,13 +126,13 @@ public class WebSocketHandler : IWebSocketHandler
     private AbstractMessageDto TryDeserializeMessage(string message)
     {
         if (message.StartsWith("{\"MessageType\":\"HistoryUpdate\""))
-            return JsonSerializer.Deserialize<HistoryUpdateMessageDto>(message)!;
+            return rdxSerializer.Deserialize<HistoryUpdateMessageDto>(message)!;
         if (message.StartsWith("{\"MessageType\":\"Synchronization\""))
-            return JsonSerializer.Deserialize<SynchronizationMessageDto>(message)!;
+            return rdxSerializer.Deserialize<SynchronizationMessageDto>(message)!;
         if (message.StartsWith("{\"MessageType\":\"ChatMessage\""))
-            return JsonSerializer.Deserialize<ChatMessageDto>(message)!;
+            return rdxSerializer.Deserialize<ChatMessageDto>(message)!;
         if (message.StartsWith("{\"MessageType\":\"UserRename\""))
-            return JsonSerializer.Deserialize<UserRenameMessageDto>(message)!;
+            return rdxSerializer.Deserialize<UserRenameMessageDto>(message)!;
 
         throw new InvalidOperationException();
     }

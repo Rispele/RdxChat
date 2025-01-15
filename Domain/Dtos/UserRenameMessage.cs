@@ -1,16 +1,23 @@
 ﻿using Domain.Dtos;
+using JetBrains.Annotations;
+using Rdx.Serialization.Attributes.Markup;
 
 namespace RdxChat.Entities;
 
 public class UserRenameMessageDto : AbstractMessageDto
 {
-    public string MessageType { get; } = MessageTypeForDtosMap.UserRename;
+    [RdxProperty]
+    public string MessageType { get; [UsedImplicitly] private set; } = MessageTypeForDtosMap.UserRename;
 
-    public Guid MessageId { get; set; }
+    [RdxProperty]
+    public Guid MessageId { get; [UsedImplicitly] set; }
 
-    public Guid UserId { get; set; }
+    [RdxProperty]
+    public Guid UserId { get; [UsedImplicitly] set; }
 
-    public DateTime RenameDateTime { get; set; }
+    [RdxProperty]
+    public DateTime RenameDateTime { get; [UsedImplicitly] set; }
 
-    public string NewName { get; set; }
+    [RdxProperty]
+    public string NewName { get; [UsedImplicitly] set; }
 }

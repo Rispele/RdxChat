@@ -30,8 +30,15 @@ public class RdxParser
         var braceType = tokensReader.GetValueAndMoveNext();
         var timestamp = ParseTimestampIfExists();
 
-        var closingBracketType = ResolveClosingBracket(braceType);
         var plexType = ResolvePlexType(braceType);
+        if (tokensReader.GetTokenType() == TokenType.ClosingBracket)
+        {
+            tokensReader.MoveNext();
+            return new ParserRdxPlex(plexType, result, timestamp);
+        }
+        
+        var closingBracketType = ResolveClosingBracket(braceType);
+        
         while (true)
         {
             result.Add(Parse(plexType));

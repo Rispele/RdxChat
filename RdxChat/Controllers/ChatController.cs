@@ -2,6 +2,7 @@
 using Domain.Dtos;
 using Domain.Services;
 using Microsoft.AspNetCore.Mvc;
+using Rdx.Serialization;
 using RdxChat.Converters;
 using RdxChat.Entities;
 using RdxChat.WebSocket;
@@ -12,11 +13,16 @@ public class ChatController : Controller
 {
     private readonly IMessageService _messageService;
     private readonly IWebSocketHandler _webSocketHandler;
+    private readonly RdxSerializer rdxSerializer;
 
-    public ChatController(IMessageService messageService, IWebSocketHandler webSocketHandler)
+    public ChatController(
+        IMessageService messageService, 
+        IWebSocketHandler webSocketHandler, 
+        RdxSerializer rdxSerializer)
     {
         _messageService = messageService;
         _webSocketHandler = webSocketHandler;
+        this.rdxSerializer = rdxSerializer;
     }
 
     [HttpGet("chat")]
@@ -60,27 +66,39 @@ public class ChatController : Controller
         };
         var messageId = await _messageService.SaveMessageAsync(chatMessageDto, sendMessageModel.SavePath);
         chatMessageDto.MessageId = messageId;
-        return JsonSerializer.Serialize(chatMessageDto);
+        return rdxSerializer.Serialize(chatMessageDto);
     }
 
     [HttpPost("send-message")]
-    public async Task SendMessage([FromBody] ChatMessageDto chatMessageDto)
+    public async Task SendMessage([FromBody] SendMessageModel sendMessageModel)
     {
-        await _webSocketHandler.SendMessage(JsonSerializer.Serialize(chatMessageDto));
+        var chatMessageDto = new ChatMessageDto
+        {
+            Message = sendMessageModel.Message,
+            MessageId = sendMessageModel.MessageId,
+            ReceiverId = sendMessageModel.ReceiverId,
+            SenderId = sendMessageModel.SenderId,
+            UserName = sendMessageModel.SenderName,
+            SendingTime = DateTime.Now
+        };
+        var serialized = rdxSerializer.Serialize(chatMessageDto);
+        await _webSocketHandler.SendMessage(serialized);
     }
     
     [HttpGet("sync-history")]
     public async Task SyncHistory([FromQuery] Guid companionId)
     {
         var currentUserId = RequestContextFactory.Build(Request).GetUserId();
-        
-        await _webSocketHandler.SendMessage(JsonSerializer.Serialize(new SynchronizationMessageDto
+
+        var serialized = rdxSerializer.Serialize(new SynchronizationMessageDto
         {
             MessageHistory = (await _messageService.GetChatMessages(currentUserId))
                 .Select(x => x.MessageId).ToList(),
             RequestSentFromId = currentUserId,
             RequestSentToId = companionId
-        }));
+        });
+        
+        await _webSocketHandler.SendMessage(serialized);
     }
 
     public class SendMessageModel

@@ -1,11 +1,19 @@
 ﻿using System.Text.Json;
 using Domain.Dtos;
 using Microsoft.AspNetCore.SignalR;
+using Rdx.Serialization;
 
 namespace RdxChat.Hubs;
 
 public class ChatHub : Hub
 {
+    private readonly RdxSerializer rdxSerializer;
+
+    public ChatHub(RdxSerializer rdxSerializer)
+    {
+        this.rdxSerializer = rdxSerializer;
+    }
+
     public override async Task OnConnectedAsync()
     {
         Console.WriteLine("Connected " + Context.ConnectionId);
@@ -28,6 +36,6 @@ public class ChatHub : Hub
             SenderId = senderId,
             SendingTime = DateTime.Now
         };
-        await Clients.Others.SendAsync("NotifyMessage", JsonSerializer.Serialize(dto));
+        await Clients.Others.SendAsync("NotifyMessage", rdxSerializer.Serialize(dto));
     }
 }

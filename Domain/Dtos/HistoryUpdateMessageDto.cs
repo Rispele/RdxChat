@@ -1,16 +1,23 @@
 ﻿using Domain.Dtos;
+using JetBrains.Annotations;
+using Rdx.Serialization.Attributes.Markup;
 
 namespace RdxChat.Entities;
 
 public class HistoryUpdateMessageDto : AbstractMessageDto
 {
-    public string MessageType { get; } = MessageTypeForDtosMap.HistoryUpdate;
+    [RdxProperty]
+    public string MessageType { get; [UsedImplicitly] private set; } = MessageTypeForDtosMap.HistoryUpdate;
 
-    public Guid RequestSentToId { get; set; }
+    [RdxProperty]
+    public Guid RequestSentToId { get; [UsedImplicitly] set; }
     
-    public Guid RequestSentFromId { get; set; }
+    [RdxProperty]
+    public Guid RequestSentFromId { get; [UsedImplicitly] set; }
 
-    public List<string> MessagesToSave { get; set; }
+    [RdxProperty]
+    public List<string> MessagesToSave { get; [UsedImplicitly] set; }
     
-    public List<Guid> MessageToSendIds { get; set; }
+    [RdxProperty]
+    public List<Guid> MessageToSendIds { get; [UsedImplicitly] set; }
 }

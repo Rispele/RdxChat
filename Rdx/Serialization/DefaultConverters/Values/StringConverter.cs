@@ -10,7 +10,7 @@ public class StringConverter : IDefaultConverter
     {
         if (obj is not string strObj) throw new InvalidCastException();
 
-        return $"\"{strObj}\"";
+        return $"\"{strObj.Replace("\"", "\\\"")}\"";
     }
 
     public object Deserialize(SerializationArguments arguments)
@@ -21,6 +21,6 @@ public class StringConverter : IDefaultConverter
         var str = parserRdxValue.Value;
         if (!str.StartsWith('\"') || !str.EndsWith('\"')) throw new FormatException("Invalid RDX value");
 
-        return str[1..^1];
+        return str[1..^1].Replace("\\\"", "\"");
     }
 }
