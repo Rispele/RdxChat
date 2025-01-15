@@ -69,16 +69,6 @@ public class WebSocketHandler : IWebSocketHandler
                         RequestSentToId = synchronizationMessage.RequestSentFromId
                     }));
                     
-                    // await SendMessage(JsonSerializer.Serialize(new SynchronizationMessageDto
-                    // {
-                    //     ReceiverId = synchronizationMessage.ReceiverId,
-                    //     SenderId = synchronizationMessage.SenderId,
-                    //     RequestSentToId = synchronizationMessage.RequestSentToId == synchronizationMessage.ReceiverId 
-                    //         ? synchronizationMessage.SenderId
-                    //         : synchronizationMessage.ReceiverId,
-                    //     MessageHistory = messageToSaveIds.ToList()
-                    // }));
-                    
                     await _hubContext.Clients.All.SendAsync("NotifyPageReload");
                 }
                 
