@@ -6,7 +6,7 @@ public interface IMessageService
 {
     Task<Guid> SaveMessageAsync(AbstractMessageDto abstractMessageDto, string path);
 
-    Task<List<AbstractMessageDto>> GetChatMessages(ChatCredentialsDto chatCredentialsDto);
+    Task<List<AbstractMessageDto>> GetChatMessages(Guid requestSentToId);
 
-    Task<(Guid[], object[])> SynchronizeHistory(ChatCredentialsDto chatCredentialsDto, List<Guid> messageIds);
+    Task<(Guid[], object[])> SynchronizeHistory(Guid requestSentToId, List<Guid> messageIds);
 }

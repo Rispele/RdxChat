@@ -12,8 +12,14 @@ public class RequestContextFactory
     public static bool TryBuild(HttpRequest request, out RequestContext? requestContext)
     {
         var userId = FindRequestUserId(request);
-
         if (userId is null)
+        {
+            requestContext = null;
+            return false;
+        }
+
+        var userName = FindRequestUserName(request);
+        if (userName is null)
         {
             requestContext = null;
             return false;
@@ -21,6 +27,7 @@ public class RequestContextFactory
 
         requestContext = new RequestContext();
         requestContext.AddHeader(RequestContextKeys.UserId, userId.ToString());
+        requestContext.AddHeader(RequestContextKeys.UserName, userName);
         return true;
     }
 
@@ -28,10 +35,9 @@ public class RequestContextFactory
     {
         var requestContext = new RequestContext();
         var userId = GetUserIdOrThrow(request);
+        var userName = GetUserNameOrThrow(request);
         requestContext.AddHeader(RequestContextKeys.UserId, userId.ToString());
-
-        var sessionId = TryGetSessionId(request);
-        if (sessionId is not null) requestContext.AddHeader(RequestContextKeys.SessionId, sessionId.ToString());
+        requestContext.AddHeader(RequestContextKeys.UserName, userName);
 
         return requestContext;
     }
@@ -41,9 +47,9 @@ public class RequestContextFactory
         return FindRequestUserId(request) ?? throw new KeyNotFoundException();
     }
 
-    private static Guid? TryGetSessionId(HttpRequest request)
+    private static string GetUserNameOrThrow(HttpRequest request)
     {
-        return FindRequestSessionId(request);
+        return FindRequestUserName(request) ?? throw new KeyNotFoundException();
     }
 
     private static Guid? FindRequestUserId(HttpRequest request)
@@ -54,11 +60,8 @@ public class RequestContextFactory
             : Guid.Parse(value);
     }
 
-    private static Guid? FindRequestSessionId(HttpRequest request)
+    private static string? FindRequestUserName(HttpRequest request)
     {
-        var value = request.Cookies[RequestContextKeys.SessionId];
-        return value is null
-            ? null
-            : Guid.Parse(value);
+        return request.Cookies[RequestContextKeys.UserName];
     }
 }

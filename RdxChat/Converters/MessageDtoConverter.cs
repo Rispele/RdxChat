@@ -12,8 +12,7 @@ public static class MessageDtoConverter
             MessagesToSave = dto.MessagesToSave,
             MessageToSendIds = dto.MessageToSendIds,
             RequestSentToId = dto.RequestSentToId,
-            ReceiverId = dto.ReceiverId,
-            SenderId = dto.SenderId
+            RequestSentFromId = dto.RequestSentFromId
         };
     }
 
@@ -22,8 +21,8 @@ public static class MessageDtoConverter
         return new SynchronizationMessage
         {
             MessageId = dto.MessageId,
-            ReceiverId = dto.ReceiverId,
-            SenderId = dto.SenderId,
+            RequestSentFromId = dto.RequestSentFromId,
+            RequestSentToId = dto.RequestSentToId,
             MessageHistory = dto.MessageHistory
         };
     }
@@ -47,7 +46,7 @@ public static class MessageDtoConverter
             Message = dto.Message,
             SendingTime = dto.SendingTime,
             UserId = dto.SenderId,
-            UserName = dto.SenderName
+            UserName = dto.UserName
         };
     }
 

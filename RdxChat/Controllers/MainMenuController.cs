@@ -6,52 +6,57 @@ namespace RdxChat.Controllers;
 [Route("main")]
 public class MainMenuController : Controller
 {
-    private readonly IUserService _userService;
+    private readonly IMessageService _messageService;
 
-    public MainMenuController(IUserService userService)
+    public MainMenuController(IMessageService messageService)
     {
-        _userService = userService;
+        _messageService = messageService;
     }
 
     [HttpGet("")]
     public async Task<IActionResult> Main()
     {
         if (!RequestContextFactory.TryBuild(ControllerContext.HttpContext.Request, out var requestContext))
-            requestContext = await ProvideNewUser();
+            requestContext = await ProvideNewUser("Unknown");
 
         try
         {
-            return View(requestContext!.GetUserId());
+            return View((requestContext!.GetUserId(), requestContext!.GetUserName()));
         }
         catch (InvalidOperationException e)
         {
-            var recreatedRequestContext = await ProvideNewUser();
-            return View(recreatedRequestContext.GetUserId());
+            var recreatedRequestContext = await ProvideNewUser("Unknown");
+            return View((recreatedRequestContext.GetUserId(), recreatedRequestContext.GetUserName()));
         }
     }
 
-    private async Task<RequestContext> ProvideNewUser()
-    {
-        var userId = await _userService.CreateUserAsync("Аноним");
-
-        var requestContext = new RequestContext();
-        requestContext.AddHeader(RequestContextKeys.UserId, userId.ToString());
-
-        Response.Cookies.Append(RequestContextKeys.UserId, userId.ToString());
-        return requestContext;
-    }
-
     [HttpPost("save-name")]
-    public async Task SaveName(string name)
+    public async Task SaveName([FromBody] string name)
     {
-        var userId = Guid.Parse(Request.Cookies[RequestContextKeys.UserId] ?? throw new InvalidOperationException());
-        await _userService.SetUserName(userId, name);
+        if (!RequestContextFactory.TryBuild(ControllerContext.HttpContext.Request, out var requestContext))
+        {
+            throw new InvalidOperationException();
+        }
+        requestContext!.AddHeader(RequestContextKeys.UserName, name);
+        Response.Cookies.Append(RequestContextKeys.UserName, name);
     }
 
     [HttpGet("find-companion")]
     public async Task<bool> FindCompanion(Guid companionId)
     {
-        var found = await _userService.FindUser(companionId);
-        return found;
+        return true;
+    }
+    
+    private async Task<RequestContext> ProvideNewUser(string userName)
+    {
+        var userId = Guid.NewGuid();
+
+        var requestContext = new RequestContext();
+        requestContext.AddHeader(RequestContextKeys.UserId, userId.ToString());
+        requestContext.AddHeader(RequestContextKeys.UserName, userName);
+        Response.Cookies.Append(RequestContextKeys.UserId, userId.ToString());
+        Response.Cookies.Append(RequestContextKeys.UserName, userName);
+        
+        return requestContext;
     }
 }

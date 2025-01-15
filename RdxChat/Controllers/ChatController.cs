@@ -22,24 +22,27 @@ public class ChatController : Controller
     [HttpGet("chat")]
     public async Task<IActionResult> Chat([FromQuery] Guid receiverId, [FromQuery] Guid senderId)
     {
-        var chatMessageDtos = await _messageService.GetChatMessages(new ChatCredentialsDto
-        {
-            ReceiverId = receiverId,
-            SenderId = senderId,
-            RequestSentToId = senderId
-        });
+        var chatMessageDtos = await _messageService.GetChatMessages(senderId);
         var chatMessages = chatMessageDtos
             .Where(x => x is ChatMessageDto)
             .Select(x => MessageDtoConverter.Convert((ChatMessageDto)x))
             .ToList();
+        var lastCompanionMessage = chatMessages
+            .Where(x => x.UserId != senderId)
+            .MaxBy(x => x.SendingTime);
+        var companionName = "Unknown";
+        if (lastCompanionMessage != null)
+        {
+            companionName = lastCompanionMessage.UserName;
+        }
         
         return View(new ChatModel
         {
             CompanionId = receiverId,
             UserId = senderId,
             Messages = chatMessages,
-            UserName = "UserName",
-            CompanionName = "CompanionName"
+            UserName = RequestContextFactory.Build(Request).GetUserName(),
+            CompanionName = companionName
         });
     }
 
@@ -52,7 +55,7 @@ public class ChatController : Controller
             MessageId = sendMessageModel.MessageId,
             ReceiverId = sendMessageModel.ReceiverId,
             SenderId = sendMessageModel.SenderId,
-            SenderName = "UserName",
+            UserName = sendMessageModel.SenderName,
             SendingTime = DateTime.Now
         };
         var messageId = await _messageService.SaveMessageAsync(chatMessageDto, sendMessageModel.SavePath);
@@ -65,6 +68,20 @@ public class ChatController : Controller
     {
         await _webSocketHandler.SendMessage(JsonSerializer.Serialize(chatMessageDto));
     }
+    
+    [HttpGet("sync-history")]
+    public async Task SyncHistory([FromQuery] Guid companionId)
+    {
+        var currentUserId = RequestContextFactory.Build(Request).GetUserId();
+        
+        await _webSocketHandler.SendMessage(JsonSerializer.Serialize(new SynchronizationMessageDto
+        {
+            MessageHistory = (await _messageService.GetChatMessages(currentUserId))
+                .Select(x => x.MessageId).ToList(),
+            RequestSentFromId = currentUserId,
+            RequestSentToId = companionId
+        }));
+    }
 
     public class SendMessageModel
     {
@@ -72,6 +89,7 @@ public class ChatController : Controller
         public string Message { get; set; }
         public Guid MessageId { get; set; }
         public Guid SenderId { get; set; }
+        public string SenderName { get; set; }
         public Guid ReceiverId { get; set; }
         public string SavePath { get; set; }
     }

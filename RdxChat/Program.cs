@@ -13,7 +13,6 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<RdxSerializer>(_ => new RdxSerializer(new UserIdReplicaIdProvider()));
 builder.Services.AddScoped<IWebSocketHandler, WebSocketHandler>();

@@ -55,23 +55,18 @@ public class WebSocketHandler : IWebSocketHandler
         switch (deserializedMessage)
         {
             case (SynchronizationMessageDto synchronizationMessage):
-                var shouldReload = false;
                 var (messageToSaveIds, messagesToSend) = 
-                    await _messageService.SynchronizeHistory(new ChatCredentialsDto
-                    {
-                        ReceiverId = synchronizationMessage.ReceiverId,
-                        SenderId = synchronizationMessage.SenderId,
-                        RequestSentToId = synchronizationMessage.RequestSentToId
-                    }, synchronizationMessage.MessageHistory);
+                    await _messageService.SynchronizeHistory(
+                        synchronizationMessage.RequestSentToId,
+                        synchronizationMessage.MessageHistory);
                 if (messageToSaveIds.Length != 0 || messagesToSend.Length != 0)
                 {
                     await SendMessage(JsonSerializer.Serialize(new HistoryUpdateMessageDto
                     {
-                        ReceiverId = synchronizationMessage.ReceiverId,
-                        SenderId = synchronizationMessage.SenderId,
                         MessagesToSave = messagesToSend.Select(x => JsonSerializer.Serialize(x)).ToList(),
                         MessageToSendIds = messageToSaveIds.ToList(),
-                        RequestSentToId = synchronizationMessage.SenderId
+                        RequestSentFromId = synchronizationMessage.RequestSentToId,
+                        RequestSentToId = synchronizationMessage.RequestSentFromId
                     }));
                     
                     // await SendMessage(JsonSerializer.Serialize(new SynchronizationMessageDto
@@ -99,12 +94,7 @@ public class WebSocketHandler : IWebSocketHandler
                     await _messageService.SaveMessageAsync(TryDeserializeMessage(toSave), historyUpdateMessage.RequestSentToId.ToString());
                 }
 
-                var messages = await _messageService.GetChatMessages(new ChatCredentialsDto
-                {
-                    ReceiverId = historyUpdateMessage.ReceiverId,
-                    SenderId = historyUpdateMessage.SenderId,
-                    RequestSentToId = historyUpdateMessage.RequestSentToId,
-                });
+                var messages = await _messageService.GetChatMessages(historyUpdateMessage.RequestSentToId);
                 var messagesToSendLocal = messages
                     .Where(x => historyUpdateMessage.MessageToSendIds.Contains(x.MessageId))
                     .ToList();
@@ -116,11 +106,8 @@ public class WebSocketHandler : IWebSocketHandler
                 {
                     MessagesToSave = messagesToSendLocal.Select(x => JsonSerializer.Serialize(x)).ToList(),
                     MessageToSendIds = new List<Guid>(),
-                    ReceiverId = historyUpdateMessage.ReceiverId,
-                    SenderId = historyUpdateMessage.SenderId,
-                    RequestSentToId = historyUpdateMessage.RequestSentToId == historyUpdateMessage.ReceiverId 
-                        ? historyUpdateMessage.SenderId 
-                        : historyUpdateMessage.ReceiverId
+                    RequestSentFromId = historyUpdateMessage.RequestSentToId,
+                    RequestSentToId = historyUpdateMessage.RequestSentFromId
                 }));
                 await _hubContext.Clients.All.SendAsync("NotifyPageReload");
                 

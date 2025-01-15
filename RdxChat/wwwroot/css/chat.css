@@ -196,6 +196,7 @@ body {
         }
 
         .chat-with {
+            color: white;
             font-weight: bold;
             font-size: 16px;
         }
@@ -232,6 +233,10 @@ body {
             margin-bottom: 15px;
         }
 
+        .message-data-name {
+            color: white;
+        }
+        
         .message-data-time {
             color: #92959E;
             padding-left: 0px;

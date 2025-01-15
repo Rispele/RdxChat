@@ -6,12 +6,10 @@ namespace Domain.Services;
 public class MessageService : IMessageService
 {
     private readonly RdxSerializer rdxSerializer;
-    private readonly IUserService _userService;
 
-    public MessageService(RdxSerializer rdxSerializer, IUserService userService)
+    public MessageService(RdxSerializer rdxSerializer)
     {
         this.rdxSerializer = rdxSerializer;
-        _userService = userService;
     }
 
     public async Task<Guid> SaveMessageAsync(AbstractMessageDto abstractMessageDto, string path)
@@ -25,10 +23,10 @@ public class MessageService : IMessageService
         return abstractMessageDto.MessageId;
     }
 
-    public async Task<List<AbstractMessageDto>> GetChatMessages(ChatCredentialsDto chatCredentialsDto)
+    public async Task<List<AbstractMessageDto>> GetChatMessages(Guid requestSentToId)
     {
         var result = new List<AbstractMessageDto>();
-        var lines = File.ReadLines(chatCredentialsDto.RequestSentToId.ToString());
+        var lines = File.ReadLines(requestSentToId.ToString());
         foreach (var line in lines)
         {
             var chatMessageDto = rdxSerializer.Deserialize<ChatMessageDto>(line);
@@ -38,9 +36,9 @@ public class MessageService : IMessageService
         return result.OrderBy(x => x.SendingTime).ToList();
     }
 
-    public async Task<(Guid[], object[])> SynchronizeHistory(ChatCredentialsDto chatCredentialsDto, List<Guid> messageIds)
+    public async Task<(Guid[], object[])> SynchronizeHistory(Guid requestSentToId, List<Guid> messageIds)
     {
-        var myHistoryMessages = await GetChatMessages(chatCredentialsDto);
+        var myHistoryMessages = await GetChatMessages(requestSentToId);
         var messageToSaveIds = messageIds
             .Where(x => myHistoryMessages.All(m => m.MessageId != x))
             .ToArray();

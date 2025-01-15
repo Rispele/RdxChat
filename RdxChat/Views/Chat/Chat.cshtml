@@ -77,16 +77,19 @@
                 MessageId: messageModel['MessageId'],
                 ReceiverId: messageModel['ReceiverId'],
                 SenderId: messageModel['SenderId'],
-                SavePath: messageModel['ReceiverId']
+                SavePath: messageModel['ReceiverId'],
+                SenderName: messageModel['UserName']
             })
         });
+        
+        document.getElementsByClassName("chat-with")[0].textContent = messageModel["UserName"];
         
         const li = document.createElement("li");
         const messageData = document.createElement("div");
         messageData.className = "message-data";
         const messageDataName = document.createElement("div");
         messageDataName.className = "message-data-name";
-        messageDataName.innerText = "@Model.CompanionName";
+        messageDataName.innerText = messageModel["UserName"];
         const messageDataTime = document.createElement("div");
         messageDataTime.className = "message-data-time";
         const time = new Date().toLocaleString("ru");
@@ -127,6 +130,7 @@
                 ReceiverId: '@Model.CompanionId',
                 SenderId: '@Model.UserId',
                 SavePath:'@Model.UserId',
+                SenderName: '@Model.UserName'
             })
         };
         const response = await fetch('/save-message', request);
@@ -162,5 +166,5 @@
         await fetch('/send-message', request);
     });
     
-
+    await fetch(`/sync-history?companionId=@Model.CompanionId`);
 </script>

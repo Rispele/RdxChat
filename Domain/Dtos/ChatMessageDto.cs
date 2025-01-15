@@ -13,7 +13,7 @@ public class ChatMessageDto : AbstractMessageDto
     [RdxProperty]
     public Guid SenderId { get; [UsedImplicitly] set; }
     [RdxProperty]
-    public string SenderName { get; [UsedImplicitly] set; }
+    public string UserName { get; [UsedImplicitly] set; }
     [RdxProperty]
     public Guid ReceiverId { get; [UsedImplicitly] set; }
 }

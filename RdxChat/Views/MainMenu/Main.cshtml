@@ -1,4 +1,4 @@
-﻿@model Guid
+﻿@model (Guid userId, string userName)
 
 <link rel="stylesheet" href="~/css/main.css" asp-append-version="true"/>
 
@@ -9,7 +9,7 @@
 
             <label class="auth-form__label">
                 <span class="auth-form__placeholder">Ваше имя</span>
-                <input class="auth-form__input input-email" type="text" name="email" autocomplete="off" required>
+                <input class="auth-form__input input-email" type="text" name="email" autocomplete="off" value="@Model.userName" required>
             </label>
 
             <label class="auth-form__label">
@@ -39,16 +39,11 @@
         const inputText = document.querySelectorAll('.auth-form__input');
 
         inputText.forEach( function(input) {
-            input.addEventListener('focus', function() {
-                this.classList.add('focus');
-                this.parentElement.querySelector('.auth-form__placeholder').classList.add('focus');
-            });
-            input.addEventListener('blur', function() {
-                this.classList.remove('focus');
-                if (! this.value) {
-                    this.parentElement.querySelector('.auth-form__placeholder').classList.remove('focus');
-                }
-            });
+            
+                input.classList.add('focus');
+                input.parentElement.querySelector('.auth-form__placeholder').classList.add('focus');
+            
+      
         });
         
         const togglers = document.querySelectorAll('.password-toggler');
@@ -77,15 +72,24 @@
 
         document.getElementsByClassName('auth-form__submit')[0].addEventListener('click', async () => {
             const name = document.getElementsByClassName('input-email')[0].value;
-            const id = document.getElementsByClassName('input-password')[0].value;
-
-            if (true) {
-                const result = await (await fetch(`/main/find-companion?companionId=${id}`)).text();
-                if (result === 'true') {
-                    window.location.href = `/chat?receiverId=${id}&senderId=@Model`;
-                }
+            if (name.length === 0) {
+                return;
             }
-        
+            await fetch(`/main/save-name`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(name)
+            });
+            
+            const id = document.getElementsByClassName('input-password')[0].value;
+            
+            const result = await (await fetch(`/main/find-companion?companionId=${id}`)).text();
+            if (result === 'true') {
+                window.location.href = `/chat?receiverId=${id}&senderId=@Model.userId`;
+            }
         });
     };
 </script>
