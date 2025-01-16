@@ -1,12 +1,16 @@
-﻿using Domain.Dtos;
+﻿using Domain.Entities;
 
 namespace Domain.Services;
 
 public interface IMessageService
 {
-    Task<Guid> SaveMessageAsync(AbstractMessageDto abstractMessageDto, string path);
+    Guid SaveMessage(AbstractMessage abstractMessage, string path);
 
-    Task<List<AbstractMessageDto>> GetChatMessages(Guid requestSentToId);
+    List<AbstractMessage> GetChatMessages(Guid companionId);
 
-    Task<(Guid[], object[])> SynchronizeHistory(Guid requestSentToId, List<Guid> messageIds);
+    (Guid[], string[]) SynchronizeHistory(Guid requestSentToId, List<Guid> messageIds);
+
+    void SaveCredentials(Guid userId, string userName);
+
+    (Guid userId, string userName)? ReadCredentials();
 }

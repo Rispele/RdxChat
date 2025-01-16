@@ -1,5 +1,5 @@
-﻿@using RdxChat.Entities
-@model RdxChat.Entities.ChatModel
+﻿@using Domain.Entities
+@model RdxChat.Controllers.ChatController.ChatModel
 
 <link rel="stylesheet" href="css/chat.css">
 
@@ -14,11 +14,11 @@
         <ul class="chat-history-list">
             @foreach (var message in Model.Messages)
             {
-                if (message.UserId == Model.UserId)
+                if (message.SenderId == Model.UserId)
                 {
                     <li class="clearfix">
                         <div class="message-data align-right">
-                            <div class="message-data-name">@message.UserName</div>
+                            <div class="message-data-name">@message.SenderName</div>
                             <div class="message-data-time">@message.SendingTime.ToString("dd.MM.yy H:mm")</div>
                         </div>
                         <div class="message other-message float-right" id="@message.MessageId">
@@ -30,7 +30,7 @@
                 {
                     <li>
                         <div class="message-data">
-                            <div class="message-data-name">@message.UserName</div>
+                            <div class="message-data-name">@message.SenderName</div>
                             <div class="message-data-time">@message.SendingTime.ToString("dd.MM.yy H:mm")</div>
                         </div>
                         <div class="message my-message" id="@message.MessageId">
@@ -58,7 +58,6 @@
     });
 
     connection.on("NotifyMessage", async function (messageDto) {
-        alert(messageDto);
         const messageModel = JSON.parse(messageDto);
 
         const existMessageBlock = document.getElementById(messageModel['MessageId']);
@@ -66,47 +65,33 @@
             return;
         }
         
-        const response = await fetch('/save-message', {
+        document.getElementsByClassName("chat-with")[0].textContent = messageModel["SenderName"];
+        
+        const isMineMessage = messageModel['SenderId'] === '@Model.UserId';
+        const isSentToMe = messageModel['ReceiverId'] === '@Model.UserId';
+        const isSentFromCompanion = messageModel['SenderId'] === '@Model.CompanionId';
+        if (isMineMessage || !isSentToMe || !isSentFromCompanion) {
+            return;
+        }
+
+        appendMessage(false, messageModel['SenderName'], messageModel['MessageId'], messageModel['Message']);
+
+        await fetch('/save-message', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                Message: messageModel['Message'],
                 MessageId: messageModel['MessageId'],
+                SendingTime: messageModel['SendingTime'],
+                Message: messageModel['Message'],
                 ReceiverId: messageModel['ReceiverId'],
                 SenderId: messageModel['SenderId'],
-                SavePath: messageModel['ReceiverId'],
-                SenderName: messageModel['UserName']
+                SenderName: messageModel['SenderName'],
+                ShouldSend: false
             })
         });
-        
-        document.getElementsByClassName("chat-with")[0].textContent = messageModel["UserName"];
-        
-        const li = document.createElement("li");
-        const messageData = document.createElement("div");
-        messageData.className = "message-data";
-        const messageDataName = document.createElement("div");
-        messageDataName.className = "message-data-name";
-        messageDataName.innerText = messageModel["UserName"];
-        const messageDataTime = document.createElement("div");
-        messageDataTime.className = "message-data-time";
-        const time = new Date().toLocaleString("ru");
-        messageDataTime.innerText = `${time.substring(0, 6)}${time.substring(8, 10)} ${time.substring(12, 17)}`;
-        const messageBlock = document.createElement("div");
-        messageBlock.className = "message my-message";
-        messageBlock.id = messageModel['MessageId']
-        messageBlock.innerText = messageModel['Message'];
-
-        messageData.appendChild(messageDataName);
-        messageData.appendChild(messageDataTime);
-        li.appendChild(messageData);
-        li.appendChild(messageBlock);
-        
-        document.getElementsByClassName("chat-history-list")[0].appendChild(li);
-        const history = document.getElementsByClassName("chat-history")[0];
-        history.scrollTo(0, history.scrollHeight);
     });
     
     connection.start();
@@ -117,54 +102,70 @@
         if (message.length === 0) {
             return;
         }
+        let guid = uuidv4();
 
-        const request = {
+        await fetch('/save-message', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                MessageType: `@MessageTypeMap.ChatMessage`,
+                MessageId: guid,
+                SendingTime: null,
                 Message: message,
-                ReceiverId: '@Model.CompanionId',
                 SenderId: '@Model.UserId',
-                SavePath:'@Model.UserId',
-                SenderName: '@Model.UserName'
+                SenderName: '@Model.UserName',
+                ReceiverId: '@Model.CompanionId',
+                ShouldSend: true
             })
-        };
-        const response = await fetch('/save-message', request);
-        const json = await response.json();
-        request.body = json;
+        });
         
+        appendMessage(true, '@Model.UserName', guid, message)
+
+        document.getElementById("message-to-send").value = "";
+    });
+    
+    await fetch(`/sync-history?companionId=@Model.CompanionId`);
+
+    function appendMessage(isMineMessage, userName, messageId, message) {
         const li = document.createElement("li");
-        li.className = "clearfix";
         const messageData = document.createElement("div");
-        messageData.className = "message-data align-right";
+        messageData.className = "message-data";
         const messageDataName = document.createElement("div");
         messageDataName.className = "message-data-name";
-        messageDataName.innerText = "@Model.UserName";
+        messageDataName.innerText = userName;
         const messageDataTime = document.createElement("div");
         messageDataTime.className = "message-data-time";
         const time = new Date().toLocaleString("ru");
         messageDataTime.innerText = `${time.substring(0, 6)}${time.substring(8, 10)} ${time.substring(12, 17)}`;
         const messageBlock = document.createElement("div");
-        messageBlock.className = "message other-message float-right";
-        messageBlock.id = JSON.parse(json)["MessageId"];
+        messageBlock.className = "message my-message";
+        messageBlock.id = messageId
         messageBlock.innerText = message;
-        
+
+        if (isMineMessage) {
+            li.className = "clearfix";
+            messageData.className = "message-data align-right";
+            messageBlock.className = "message other-message float-right";
+        }
+
         messageData.appendChild(messageDataName);
         messageData.appendChild(messageDataTime);
         li.appendChild(messageData);
         li.appendChild(messageBlock);
+
         document.getElementsByClassName("chat-history-list")[0].appendChild(li);
         const history = document.getElementsByClassName("chat-history")[0];
         history.scrollTo(0, history.scrollHeight);
+    }
 
-        document.getElementById("message-to-send").value = "";
-
-        await fetch('/send-message', request);
-    });
-    
-    await fetch(`/sync-history?companionId=@Model.CompanionId`);
+    function uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+            .replace(/[xy]/g, function (c) {
+                const r = Math.random() * 16 | 0,
+                    v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+    }
 </script>

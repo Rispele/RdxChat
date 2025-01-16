@@ -1,10 +1,9 @@
 ﻿using System.Text.Json;
-using Domain.Dtos;
+using Domain.Entities;
 using Domain.Services;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Rdx.Serialization;
-using RdxChat.Converters;
-using RdxChat.Entities;
 using RdxChat.WebSocket;
 
 namespace RdxChat.Controllers;
@@ -13,7 +12,7 @@ public class ChatController : Controller
 {
     private readonly IMessageService _messageService;
     private readonly IWebSocketHandler _webSocketHandler;
-    private readonly RdxSerializer rdxSerializer;
+    private readonly RdxSerializer _rdxSerializer;
 
     public ChatController(
         IMessageService messageService, 
@@ -22,24 +21,23 @@ public class ChatController : Controller
     {
         _messageService = messageService;
         _webSocketHandler = webSocketHandler;
-        this.rdxSerializer = rdxSerializer;
+        _rdxSerializer = rdxSerializer;
     }
 
     [HttpGet("chat")]
-    public async Task<IActionResult> Chat([FromQuery] Guid receiverId, [FromQuery] Guid senderId)
+    public IActionResult Chat([FromQuery] Guid receiverId, [FromQuery] Guid senderId)
     {
-        var chatMessageDtos = await _messageService.GetChatMessages(senderId);
-        var chatMessages = chatMessageDtos
-            .Where(x => x is ChatMessageDto)
-            .Select(x => MessageDtoConverter.Convert((ChatMessageDto)x))
+        var chatMessages = _messageService
+            .GetChatMessages(receiverId)
+            .OfType<ChatMessage>()
             .ToList();
         var lastCompanionMessage = chatMessages
-            .Where(x => x.UserId != senderId)
+            .Where(x => x.SenderId != senderId)
             .MaxBy(x => x.SendingTime);
         var companionName = "Unknown";
         if (lastCompanionMessage != null)
         {
-            companionName = lastCompanionMessage.UserName;
+            companionName = lastCompanionMessage.SenderName;
         }
         
         return View(new ChatModel
@@ -53,36 +51,34 @@ public class ChatController : Controller
     }
 
     [HttpPost("save-message")]
-    public async Task<string> SaveMessage([FromBody] SendMessageModel sendMessageModel)
+    public async Task SaveMessage([FromBody] SendMessageModel sendMessageModel)
     {
-        var chatMessageDto = new ChatMessageDto
+        var chatMessage = new ChatMessage
         {
-            Message = sendMessageModel.Message,
             MessageId = sendMessageModel.MessageId,
-            ReceiverId = sendMessageModel.ReceiverId,
+            SendingTime = sendMessageModel.SendingTime ?? DateTime.Now,
+            Message = sendMessageModel.Message,
             SenderId = sendMessageModel.SenderId,
-            UserName = sendMessageModel.SenderName,
-            SendingTime = DateTime.Now
+            SenderName = sendMessageModel.SenderName,
+            ReceiverId = sendMessageModel.ReceiverId
         };
-        var messageId = await _messageService.SaveMessageAsync(chatMessageDto, sendMessageModel.SavePath);
-        chatMessageDto.MessageId = messageId;
-        return rdxSerializer.Serialize(chatMessageDto);
-    }
 
-    [HttpPost("send-message")]
-    public async Task SendMessage([FromBody] SendMessageModel sendMessageModel)
-    {
-        var chatMessageDto = new ChatMessageDto
+        var currentUserId = RequestContextFactory.Build(Request).GetUserId();
+        if (currentUserId != chatMessage.SenderId && currentUserId != chatMessage.ReceiverId)
         {
-            Message = sendMessageModel.Message,
-            MessageId = sendMessageModel.MessageId,
-            ReceiverId = sendMessageModel.ReceiverId,
-            SenderId = sendMessageModel.SenderId,
-            UserName = sendMessageModel.SenderName,
-            SendingTime = DateTime.Now
-        };
-        var serialized = rdxSerializer.Serialize(chatMessageDto);
-        await _webSocketHandler.SendMessage(serialized);
+            throw new InvalidOperationException();
+        }
+        
+        var messageId = _messageService.SaveMessage(chatMessage,
+            currentUserId == chatMessage.SenderId 
+                ? chatMessage.SenderId.ToString() 
+                : chatMessage.ReceiverId.ToString());
+        chatMessage.MessageId = messageId;
+
+        if (sendMessageModel.ShouldSend)
+        {
+            await SendMessage(chatMessage);
+        }
     }
     
     [HttpGet("sync-history")]
@@ -90,9 +86,9 @@ public class ChatController : Controller
     {
         var currentUserId = RequestContextFactory.Build(Request).GetUserId();
 
-        var serialized = rdxSerializer.Serialize(new SynchronizationMessageDto
+        var serialized = _rdxSerializer.Serialize(new SynchronizationMessage
         {
-            MessageHistory = (await _messageService.GetChatMessages(currentUserId))
+            MessageHistory = _messageService.GetChatMessages(currentUserId)
                 .Select(x => x.MessageId).ToList(),
             RequestSentFromId = currentUserId,
             RequestSentToId = companionId
@@ -101,14 +97,29 @@ public class ChatController : Controller
         await _webSocketHandler.SendMessage(serialized);
     }
 
+    public class ChatModel
+    {
+        public required Guid UserId { get; set; }
+        public required Guid CompanionId { get; set; }
+        public required List<ChatMessage> Messages { get; set; } = [];
+        public required string UserName { get; set; }
+        public required string CompanionName { get; set; }
+    }
+    
     public class SendMessageModel
     {
-        public string MessageType { get; set; }
-        public string Message { get; set; }
         public Guid MessageId { get; set; }
+        public DateTime? SendingTime { get; set; }
+        public string Message { get; set; }
         public Guid SenderId { get; set; }
         public string SenderName { get; set; }
         public Guid ReceiverId { get; set; }
-        public string SavePath { get; set; }
+        public bool ShouldSend { get; set; }
+    }
+    
+    private async Task SendMessage(ChatMessage chatMessage)
+    {
+        var serialized = _rdxSerializer.Serialize(chatMessage);
+        await _webSocketHandler.SendMessage(serialized);
     }
 }

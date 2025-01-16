@@ -2,13 +2,11 @@
 
 public class RequestContext
 {
-    private readonly Dictionary<string, string> headers = new();
-
-    public IReadOnlyDictionary<string, string> Headers => headers;
+    private readonly Dictionary<string, string> _headers = new();
 
     public void AddHeader(string key, string value)
     {
-        headers[key] = value;
+        _headers[key] = value;
     }
 
     public Guid GetUserId()
@@ -21,17 +19,15 @@ public class RequestContext
         return FindUserName() ?? throw new KeyNotFoundException();
     }
 
-    public Guid? FindUserId()
+    private Guid? FindUserId()
     {
-        if (headers.TryGetValue(RequestContextKeys.UserId, out var header)) return Guid.Parse(header);
+        if (_headers.TryGetValue(RequestContextKeys.UserId, out var header)) return Guid.Parse(header);
 
         return null;
     }
 
-    public string? FindUserName()
+    private string? FindUserName()
     {
-        if (headers.TryGetValue(RequestContextKeys.UserName, out var header)) return header;
-
-        return null;
+        return _headers.GetValueOrDefault(RequestContextKeys.UserName);
     }
 }

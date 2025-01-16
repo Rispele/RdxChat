@@ -7,31 +7,37 @@ namespace RdxChat.Controllers;
 public class MainMenuController : Controller
 {
     private readonly IMessageService _messageService;
-
+    
     public MainMenuController(IMessageService messageService)
     {
         _messageService = messageService;
     }
-
+    
     [HttpGet("")]
-    public async Task<IActionResult> Main()
+    public IActionResult Main()
     {
         if (!RequestContextFactory.TryBuild(ControllerContext.HttpContext.Request, out var requestContext))
-            requestContext = await ProvideNewUser("Unknown");
+            requestContext = ProvideNewUser("Unknown");
 
         try
         {
+            var userId = requestContext!.GetUserId();
+            var userName = requestContext!.GetUserName();
+            _messageService.SaveCredentials(userId, userName);
             return View((requestContext!.GetUserId(), requestContext!.GetUserName()));
         }
         catch (InvalidOperationException e)
         {
-            var recreatedRequestContext = await ProvideNewUser("Unknown");
-            return View((recreatedRequestContext.GetUserId(), recreatedRequestContext.GetUserName()));
+            var recreatedRequestContext = ProvideNewUser("Unknown");
+            var userId = recreatedRequestContext.GetUserId();
+            var userName = recreatedRequestContext.GetUserName();
+            _messageService.SaveCredentials(userId, userName);
+            return View((userId, userName));
         }
     }
 
     [HttpPost("save-name")]
-    public async Task SaveName([FromBody] string name)
+    public void SaveName([FromBody] string name)
     {
         if (!RequestContextFactory.TryBuild(ControllerContext.HttpContext.Request, out var requestContext))
         {
@@ -39,6 +45,7 @@ public class MainMenuController : Controller
         }
         requestContext!.AddHeader(RequestContextKeys.UserName, name);
         Response.Cookies.Append(RequestContextKeys.UserName, name);
+        _messageService.SaveCredentials(requestContext!.GetUserId(), name);
     }
 
     [HttpGet("find-companion")]
@@ -47,7 +54,7 @@ public class MainMenuController : Controller
         return true;
     }
     
-    private async Task<RequestContext> ProvideNewUser(string userName)
+    private RequestContext ProvideNewUser(string userName)
     {
         var userId = Guid.NewGuid();
 

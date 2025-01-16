@@ -1,12 +1,12 @@
-﻿using FluentAssertions;
+﻿using Domain.Entities;
+using FluentAssertions;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using Rdx.Objects;
 using Rdx.Objects.ValueObjects;
 using Rdx.Serialization;
 using Rdx.Serialization.Attributes.Markup;
-using RdxChat.Entities;
-using Tests.Serializer.Classes.Case1;
+using ChatMessageDto = Tests.Serializer.Classes.Case1.ChatMessageDto;
 
 namespace Tests.Serializer;
 
@@ -37,7 +37,7 @@ public class RdxSerializer_CustomObject_Tests
         "{\"MessageType\":\"ChatMessage\", \"Message\":\"sdfg\", \"SenderId\":\"d503691f-fc05-4f30-9525-8a4a69b50603\", \"SenderName\":\"UserName\", \"ReceiverId\":\"abe939e3-b2c1-42f7-8ca3-f359e26d0451\", \"MessageId\":\"262dd286-ae66-4a9b-b5c0-79b816bb6299\", \"SendingTime\":\"01/14/2025 22:33:55\"}")]
     [TestCase(typeof(TestObjectOuter),
         "{<\"Inner\":{<\"bool\":True>, <\"IntegerValue\":123>, <\"RdxString\":\"string\"@1-2>}>, <\"abc\":\"abc\">, <\"RdxObj\":{@0-0 <\"Value\":0>}>}")]
-    [TestCase(typeof(HistoryUpdateMessageDto),
+    [TestCase(typeof(HistoryUpdateMessage),
         "{\"MessageType\":\"HistoryUpdate\", \"RequestSentToId\":\"7cc583df-8a27-41d2-bae0-24e015ced8b8\", \"RequestSentFromId\":\"87cb454a-4313-44a0-af10-7ae06491aa43\", \"MessagesToSave\":[\"{\\\"MessageType\\\":\\\"ChatMessage\\\", \\\"Message\\\":\\\"123\\\", \\\"SenderId\\\":\\\"87cb454a-4313-44a0-af10-7ae06491aa43\\\", \\\"UserName\\\":\\\"Unknown\\\", \\\"ReceiverId\\\":\\\"7cc583df-8a27-41d2-bae0-24e015ced8b8\\\", \\\"MessageId\\\":\\\"1cad2b84-84c0-4900-97c6-9338bd193c40\\\", \\\"SendingTime\\\":\\\"01/16/2025 02:39:43\\\"}\"], \"MessageToSendIds\":[], \"MessageId\":\"00000000-0000-0000-0000-000000000000\", \"SendingTime\":\"01/01/0001 00:00:00\"}")]
     public void Deserialize_ShouldNotThrow(Type type, string jdr)
     {

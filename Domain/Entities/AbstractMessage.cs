@@ -1,14 +1,10 @@
 ﻿using JetBrains.Annotations;
 using Rdx.Serialization.Attributes.Markup;
-using RdxChat.Entities;
 
-namespace Domain.Dtos;
+namespace Domain.Entities;
 
-public class AbstractMessageDto
+public abstract class AbstractMessage
 {
-    [RdxProperty]
-    public string MessageType { get; [UsedImplicitly] set; }
-
     [RdxProperty]
     public Guid MessageId { get; [UsedImplicitly] set; }
     

@@ -1,14 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿namespace Domain.Services;
 
-namespace Domain.Services;
-
-public class RequestContextFactory
+public static class RequestContextFactory
 {
-    public static RequestContext Build(HubCallerContext context)
-    {
-        return Build(context.GetHttpContext()!.Request);
-    }
-
     public static bool TryBuild(HttpRequest request, out RequestContext? requestContext)
     {
         var userId = FindRequestUserId(request);
@@ -26,7 +19,7 @@ public class RequestContextFactory
         }
 
         requestContext = new RequestContext();
-        requestContext.AddHeader(RequestContextKeys.UserId, userId.ToString());
+        requestContext.AddHeader(RequestContextKeys.UserId, userId.Value.ToString());
         requestContext.AddHeader(RequestContextKeys.UserName, userName);
         return true;
     }
