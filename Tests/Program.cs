@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using NUnit.Framework;
 using Rdx.Objects;
+using Rdx.Objects.PlexValues;
 using Rdx.Primitives;
 using Rdx.Serialization;
 using Tests.Serializer;
@@ -45,6 +46,8 @@ internal static class Program
         var slices = buffer.AppendObjects([t1, t2, t3]);
         // var slices = buffer.AppendObjects([t1, t2]);
         var mergedSlice = buffer.Merge(slices);
+
+        var deserializedMerged = serializer.Deserialize<RdxTuple<int, int>>(buffer.ExtractObject(mergedSlice));
         
         Console.WriteLine(buffer.ExtractObject(slices[0]));
         Console.WriteLine(buffer.ExtractObject(slices[1]));
