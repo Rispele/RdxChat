@@ -27,20 +27,7 @@ public class RdxBuffer : IDisposable
         Marshal.FreeHGlobal(buffer);
     }
 
-    public RdxBufferSlice AppendObject(string rdxObject)
-    {
-        var serializedBegin = Marshal.StringToHGlobalAnsi(rdxObject);
-        var serializedEnd = serializedBegin + rdxObject.Length;
-
-        var tlvBegin = FreeBufferSlice.From;
-        RdxExportedFunctions.FromJDR(FreeBufferSlice.Borders, [serializedBegin, serializedEnd]);
-
-        Marshal.FreeHGlobal(serializedBegin);
-
-        return new RdxBufferSlice(tlvBegin, FreeBufferSlice.From);
-    }
-
-    public RdxBufferSlice AppendObject(RdxObject rdxObject)
+    public RdxBufferSlice AppendObject(object rdxObject)
     {
         var serialized = serializer.Serialize(rdxObject);
         var serializedBegin = Marshal.StringToHGlobalAnsi(serialized);
@@ -54,7 +41,7 @@ public class RdxBuffer : IDisposable
         return new RdxBufferSlice(tlvBegin, FreeBufferSlice.From);
     }
 
-    public RdxBufferSlice[] AppendObjects(RdxObject[] objects)
+    public RdxBufferSlice[] AppendObjects(object[] objects)
     {
         return objects.Select(AppendObject).ToArray();
     }
