@@ -67,7 +67,7 @@ public class RdxSerializer_CustomObject_Tests
         serialized
             .Should()
             .Be(
-                "{\"Inner\":{\"bool\":True, \"IntegerValue\":123, \"RdxString\":\"string\"@1-2}, \"abc\":\"abc\", \"RdxObj\":{@0-0 \"Value\":1}}");
+                """{"Inner":{"bool":True, "IntegerValue":123, "RdxString":"string"@1-2}, "abc":"abc", "RdxObj":{@0-0 "Value":1}}""");
     }
 
     public static IEnumerable<TestObjectOuter> TestCaseSource()
@@ -91,7 +91,7 @@ public class RdxSerializer_CustomObject_Tests
                         4,
                         0),
                     random.Next(2) == 0 ? Guid.NewGuid() : null),
-                RdxObj = new TestRdxObject
+                RdxObj = new TestRdxObject(random.NextInt64(100), random.NextInt64(100))
                 {
                     Value = random.Next(10)
                 }
@@ -112,6 +112,11 @@ public class RdxSerializer_CustomObject_Tests
         public TestRdxObject() : base(0, 0, 0)
         {
         }
+        
+        public TestRdxObject(long replicaId, long version) : base(replicaId, version, 0)
+        {
+        }
+
 
         [RdxProperty] public int Value { get; [UsedImplicitly] set; }
     }

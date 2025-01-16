@@ -23,9 +23,9 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
         new LongConverter(),
         new StringConverter(),
         new GuidConverter(),
-        
+
         new NullableConverter(),
-        
+
         new ListConverter(),
         new HashSetConverter(),
         new DictionaryConverter()
@@ -33,6 +33,12 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
 
     private readonly ConcurrentDictionary<Type, RdxSerializerAttribute> knownSerializers = new();
     private readonly ConcurrentDictionary<Type, (string name, PropertyInfo propertyInfo)[]> knownTypes = new();
+
+    private readonly PropertyInfo ReplicaIdProperty = typeof(RdxObject).GetProperty("ReplicaId")!;
+    private readonly PropertyInfo VersionProperty = typeof(RdxObject).GetProperty("Version")!;
+
+    private readonly PropertyInfo CurrentReplicaIdProperty =
+        typeof(RdxObject).GetProperty("CurrentReplicaId", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
     [GeneratedRegex("\\s{2,}")]
     private static partial Regex ClearJRdxRegex();
@@ -172,6 +178,12 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
             propertyInfo.SetValue(instance, parsed);
         }
 
+        if (dict.TryGetValue("ReplicaId", out var replicaId))
+        {
+            ReplicaIdProperty.SetValue(instance, replicaId);
+            VersionProperty.SetValue(instance, dict["Version"]);
+            CurrentReplicaIdProperty.SetValue(instance, replicaIdProvider.GetReplicaId());
+        }
         return instance;
     }
 
@@ -199,9 +211,6 @@ public partial class RdxSerializer(IReplicaIdProvider replicaIdProvider)
             dict["ReplicaId"] = replicaId;
             dict["Version"] = version;
         }
-
-        if (type.GetParentTypes().Contains(typeof(RdxObject)))
-            dict["currentReplicaId"] = replicaIdProvider.GetReplicaId();
 
         return dict;
     }
