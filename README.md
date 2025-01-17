@@ -53,6 +53,8 @@ info: Microsoft.Hosting.Lifetime[0]
 info: Microsoft.Hosting.Lifetime[0]
       Content root path: project\parent\dir\RdxChat\RdxChat
 ```
+Открыть стартовую страницу для начала общения можно, перейдя по адресу `http://localhost:5238/main`.
+
 Конфигурация порта приложения может быть выполнена в файле `launchSettings.json`.
 
 ## Технические ограничения
